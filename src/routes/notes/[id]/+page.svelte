@@ -83,7 +83,7 @@
     }
 
     :global(.prose a) {
-        color: #2563eb;
+        color: rgb(234, 88, 12);
         text-decoration: underline;
         font-weight: 500;
     }

@@ -10,3 +10,9 @@
 		{@render children()}
 	</main>
 </div>
+
+<style>
+	main {
+		padding: 1rem;
+	}
+</style>

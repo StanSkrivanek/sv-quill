@@ -1,131 +1,200 @@
 
-<script lang="ts">
-  import { browser } from '$app/environment';
-  import RichTextEditor from '$lib/components/RichTextEditor.svelte';
-  import type { PageData } from './$types';
+<script>
+  //import { getAllNotes } from '$lib/server/db';
   
-  interface Props {
-    data: PageData;
-  }
-
-  let { data }: Props = $props();
+  // let { data } = $props();
   
-  let editorContent = $state({
-    html: '',
-    text: ''
-  });
-
-  let isSaving = $state(false);
-  let saveStatus: 'idle' | 'saving' | 'success' | 'error' = $state('idle');
-  let errorMessage = $state('');
-
-  function handleContentChange(event: CustomEvent<{ html: string; text: string }>) {
-    const { html, text } = event.detail;
-    editorContent = { html, text };
-  }
-
-  async function handleSave() {
-    if (!editorContent.html.trim()) {
-      errorMessage = 'Content cannot be empty';
-      saveStatus = 'error';
-      return;
-    }
-
-    if (browser) {
-      try {
-        saveStatus = 'saving';
-        isSaving = true;
-        
-        const formData = new FormData();
-        formData.append('html', editorContent.html);
-        formData.append('text', editorContent.text);
-        
-        const response = await fetch('?/saveContent', {
-          method: 'POST',
-          body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (result.error) {
-          throw new Error(result.error);
-        }
-        
-        saveStatus = 'success';
-        setTimeout(() => {
-          saveStatus = 'idle';
-        }, 3000);
-      } catch (error) {
-        console.error('Error saving content:', error);
-        saveStatus = 'error';
-        errorMessage = error instanceof Error ? error.message : 'Failed to save content';
-      } finally {
-        isSaving = false;
-      }
-    }
-  }
+//  let notesCount = $derived(data.notes.length);
 </script>
 
-<svelte:head>
-  {#if browser}
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-  {/if}
-</svelte:head>
-
-<div class="container mx-auto px-4 py-8 max-w-4xl">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Rich Text Editor</h1>
-    
-    <div class="flex items-center gap-4">
-      {#if saveStatus === 'success'}
-        <span class="text-green-600 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-          </svg>
-          Saved successfully
-        </span>
-      {/if}
-      {#if saveStatus === 'error'}
-        <span class="text-red-600 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-          {errorMessage}
-        </span>
-      {/if}
-      
-      <button
-        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700
-               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-               disabled:opacity-50 disabled:cursor-not-allowed
-               transition-colors duration-200 flex items-center gap-2"
-        onclick={handleSave}
-        disabled={isSaving || !editorContent.html.trim()}
-      >
-        {#if isSaving}
-          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Saving...
-        {:else}
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586l-1.293-1.293z" />
-            <path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
-          </svg>
-          Save
-        {/if}
-      </button>
+<div class="hero">
+  <div class="hero-content">
+    <h1>Simply Notes</h1>
+    <p class="tagline">Capture your thoughts, simply and beautifully</p>
+    <p class="description">
+      A minimalist note-taking app that lets you focus on what matters most - your ideas.
+      No distractions, just pure writing pleasure.
+    </p>
+    <div class="cta-container">
+      <a href="/notes/new" class="cta-button">Start Writing</a>
+      <!-- {#if notesCount > 0}
+        <a href="/notes" class="secondary-button">View My Notes ({notesCount})</a>
+      {/if} -->
     </div>
   </div>
-  
-  {#if browser}
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-      <RichTextEditor
-        value={editorContent.html}
-        placeholder="Write your content here..."
-        on:change={handleContentChange}
-      />
-    </div>
-  {/if}
+
+  <div class="hero-image">
+    <svg viewBox="0 0 400 300" class="illustration">
+      <!-- Notebook -->
+      <rect x="100" y="50" width="200" height="250" rx="10" fill="rgba(234, 88, 12, 0.1)" />
+      <rect x="120" y="70" width="160" height="20" rx="5" fill="rgba(234, 88, 12, 0.2)" />
+      <rect x="120" y="100" width="160" height="10" rx="5" fill="rgba(234, 88, 12, 0.2)" />
+      <rect x="120" y="120" width="120" height="10" rx="5" fill="rgba(234, 88, 12, 0.2)" />
+      <rect x="120" y="140" width="140" height="10" rx="5" fill="rgba(234, 88, 12, 0.2)" />
+      
+      <!-- Pencil -->
+      <g transform="rotate(-45, 280, 150)">
+        <rect x="250" y="140" width="60" height="20" rx="2" fill="rgb(234, 88, 12)" />
+        <polygon points="310,140 310,160 330,150" fill="rgba(234, 58, 12)" />
+      </g>
+      
+      <!-- Decorative circles -->
+      <circle cx="50" cy="50" r="20" fill="rgba(234, 88, 12)" opacity="0.2" />
+      <circle cx="350" cy="250" r="30" fill="rgba(234, 88, 12)" opacity="0.2" />
+      <circle cx="30" cy="200" r="15" fill="rgba(234, 88, 12)" opacity="0.2" />
+    </svg>
+  </div>
 </div>
+
+<div class="features">
+  <div class="feature">
+    <h3>🚀 Simple & Fast</h3>
+    <p>No complicated setup. Just open and start writing.</p>
+  </div>
+  <div class="feature">
+    <h3>✨ Rich Text Editor</h3>
+    <p>Format your notes beautifully with our intuitive editor.</p>
+  </div>
+  <div class="feature">
+    <h3>🔒 Safe & Private</h3>
+    <p>Your notes are stored securely on your local machine.</p>
+  </div>
+</div>
+
+<style>
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    min-height: 80vh;
+    gap: 4rem;
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      flex-direction: column;
+      text-align: center;
+      padding: 2rem;
+    }
+  }
+
+  .hero-content {
+    flex: 1;
+  }
+
+  h1 {
+    font-size: 4rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(45deg, rgb(234, 88, 12), rgb(246, 138, 80));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+
+  .tagline {
+    font-size: 1.5rem;
+    color: #666;
+    margin: 1rem 0;
+  }
+
+  .description {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 1.5rem 0;
+    line-height: 1.6;
+  }
+
+  .hero-image {
+    flex: 1;
+    max-width: 500px;
+  }
+
+  .illustration {
+    width: 100%;
+    height: auto;
+  }
+
+  .cta-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .cta-container {
+      justify-content: center;
+    }
+  }
+
+  .cta-button {
+    background: rgb(234, 88, 12);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(234, 88, 12, 0.2);
+  }
+
+  .cta-button:hover {
+    background: rgb(234, 88, 12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(234, 88, 12, 0.4);
+  }
+
+  .secondary-button {
+    background: #f0f0f0;
+    color: #666;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+  }
+
+  .secondary-button:hover {
+    background: #e0e0e0;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    background: #f9f9f9;
+    border-radius: 20px;
+    margin-bottom: 4rem;
+  }
+
+  .feature {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+  }
+
+  .feature:hover {
+    transform: translateY(-5px);
+  }
+
+  .feature h3 {
+    color: rgb(234, 88, 12);
+    margin-bottom: 1rem;
+  }
+
+  .feature p {
+    color: #666;
+    line-height: 1.6;
+  }
+</style>

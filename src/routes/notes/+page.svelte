@@ -27,9 +27,9 @@
 
 		<button
 			onclick={handleCreateNew}
-			class="flex items-center gap-2 rounded-md bg-blue-600 px-4
-             py-2 text-white hover:bg-blue-700 focus:outline-none
-             focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+			class="flex items-center gap-2 rounded-md bg-orange-600 px-4
+             py-2 text-white hover:bg-orange-700 focus:outline-none
+             focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -84,9 +84,9 @@
 						</div>
 						<button
 							onclick={() => note.id !== undefined && handleReadNote(note.id)}
-							class="ml-4 rounded-md bg-blue-50 px-4 py-2 text-sm font-medium
-					 text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700
-					 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+							class="ml-4 rounded-md bg-orange-100 px-4 py-2 text-sm font-medium
+					 text-orange-700 transition-colors hover:bg-green-200 hover:text-green-700
+					 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
 						>
 							Read
 						</button>

@@ -98,10 +98,10 @@
 
 			<button
 				onclick={handleSave}
-				class="flex items-center gap-2 rounded-md bg-blue-600 px-4
+				class="flex items-center gap-2 rounded-md bg-orange-600 px-4
                        py-2 text-white transition-colors duration-200
-                       hover:bg-blue-700 focus:outline-none
-                       focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                       hover:bg-orange-700 focus:outline-none
+                       focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 				disabled={isSaving || !editorContent.html.trim()}
 			>
 				{#if isSaving}

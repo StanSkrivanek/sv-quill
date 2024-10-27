@@ -1,5 +1,5 @@
-
-import { getDatabase, initializeDatabase } from './db';
+// CRUD Notes Handler
+import { getDatabase } from './db';
 import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 

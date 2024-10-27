@@ -29,7 +29,8 @@ export const actions: Actions = {
 // Optional: If you need to load any data for the page
 export const load = async () => {
 	const notesHandler = new NotesHandler();
-	const recentNotes = notesHandler.getAllNotes().slice(0, 5); // Get 5 most recent notes
+	const recentNotes = notesHandler.getAllNotes(); // Get Allnotes
+	// const recentNotes = notesHandler.getAllNotes().slice(0, 5); // Get 5 most recent notes
 
 	return {
 		recentNotes

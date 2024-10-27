@@ -1,4 +1,4 @@
-// lib/server/db/index.ts
+// create and initiate DB connection
 import Database from 'better-sqlite3';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
