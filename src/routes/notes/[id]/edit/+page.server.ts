@@ -4,7 +4,6 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const noteId = parseInt(params.id);
-	console.log("🚀 ~ NOTE EDIT :PageServerLoad= ~ noteId:", noteId)
 
 	if (isNaN(noteId)) {
 		throw error(400, 'Invalid note ID');

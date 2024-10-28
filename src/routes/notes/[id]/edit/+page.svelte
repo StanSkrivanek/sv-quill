@@ -9,11 +9,10 @@
 	}
 
 	let { data }: Props = $props();
-	console.log('NOTE [ID] EDIT PAGE', data);
 
-	function formatDate(dateString: string) {
-		return new Date(dateString).toLocaleString();
-	}
+	// function formatDate(dateString: string) {
+	// 	return new Date(dateString).toLocaleString();
+	// }
 	let editorContent = $state({
 		html: data.note.html,
 		text: data.note.text

@@ -1,7 +1,7 @@
 // CRUD Notes Handler
-import { getDatabase } from './db';
 import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
+import { getDatabase } from './db';
 
 const window = new JSDOM('').window;
 const purify = DOMPurify(window);
@@ -98,10 +98,12 @@ export class NotesHandler {
 		const sanitizedHtml = this.sanitizeContent(content.html);
 		const { title, excerpt } = this.processContent(sanitizedHtml, content.text);
 
-		const stmt = this.db.prepare(`
-      INSERT INTO notes (title, html, text, excerpt)
-      VALUES (?, ?, ?, ?)
-    `);
+		const stmt = this.db.prepare(
+			`
+			INSERT INTO notes (title, html, text, excerpt)
+			VALUES (?, ?, ?, ?)
+    		`
+		);
 
 		const result = stmt.run(title, sanitizedHtml, content.text, excerpt);
 		return result.lastInsertRowid as number;
@@ -111,29 +113,31 @@ export class NotesHandler {
 		return this.db
 			.prepare(
 				`
-      SELECT id, title, excerpt, created_at, updated_at
-      FROM notes
-      ORDER BY created_at DESC
-    `
+      		SELECT id, title, excerpt, created_at, updated_at
+      		FROM notes
+      		ORDER BY created_at DESC
+    			`
 			)
 			.all() as Note[];
 	}
 
 	getNote(id: number): Note | undefined {
-		console.log('---- GET NOTE ID',id);
+		// console.log('---- GET NOTE ID',id);
 		return this.db.prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
 	}
 
 	updateNote(id: number, content: Pick<Note, 'html' | 'text'>): boolean {
-		console.log('---- UPDATE NOTE ID',id);
+		// console.log('---- UPDATE NOTE ID',id);
 		const sanitizedHtml = this.sanitizeContent(content.html);
 		const { title, excerpt } = this.processContent(sanitizedHtml, content.text);
 
-		const stmt = this.db.prepare(`
-      UPDATE notes 
-      SET title = ?, html = ?, text = ?, excerpt = ?
-      WHERE id = ?
-    `);
+		const stmt = this.db.prepare(
+			`
+      	UPDATE notes 
+      	SET title = ?, html = ?, text = ?, excerpt = ?
+      	WHERE id = ?
+    		`
+		);
 
 		const result = stmt.run(title, sanitizedHtml, content.text, excerpt, id);
 		return result.changes > 0;

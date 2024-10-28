@@ -7,7 +7,7 @@
 	}
 
 	let { data }: Props = $props();
-	console.log('NOTE [ID]  PAGE', data);
+
 	function formatDate(dateString: string) {
 		return new Date(dateString).toLocaleString();
 	}
@@ -39,16 +39,14 @@
 			</svg>
 			Back to List
 		</button>
-
-		<div class="text-sm text-gray-500">
-			{#if data.note.created_at}
-				Created: {formatDate(data.note.created_at)}
-			{/if}
-			{#if data.note.updated_at && data.note.updated_at !== data.note.created_at}
-				<span class="mx-2">•</span>
-				Updated: {formatDate(data.note.updated_at)}
-			{/if}
-		</div>
+		<button
+			onclick={() => data.note.id !== undefined && goto(`/notes/${data.note.id}/edit`)}
+			class="ml-4 rounded-md bg-orange-100 px-4 py-2 text-sm font-medium
+				text-orange-700 transition-colors hover:bg-green-200 hover:text-green-700
+				focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
+		>
+			Edit
+		</button>
 	</div>
 
 	<div class="overflow-hidden rounded-lg bg-white shadow-lg">
@@ -56,15 +54,20 @@
 			<article class="prose prose-lg max-w-none">
 				{@html data.note.html}
 			</article>
-			<button
-				onclick={() => data.note.id !== undefined && goto(`/notes/${data.note.id}/edit`)}
-				class="ml-4 rounded-md bg-orange-100 px-4 py-2 text-sm font-medium
-					 text-orange-700 transition-colors hover:bg-green-200 hover:text-green-700
-					 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
-			>
-				Edit
-			</button>
 		</div>
+	</div>
+	<div class="flex justify-between pt-4 text-sm text-gray-500">
+		{#if data.note.created_at}
+			<div>
+				Created: {formatDate(data.note.created_at)}
+			</div>
+		{/if}
+		{#if data.note.updated_at && data.note.updated_at !== data.note.created_at}
+			<div>
+				<!-- <span class="mx-2">•</span> -->
+				Updated: {formatDate(data.note.updated_at)}
+			</div>
+		{/if}
 	</div>
 </div>
 
