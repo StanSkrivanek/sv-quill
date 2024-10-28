@@ -120,10 +120,12 @@ export class NotesHandler {
 	}
 
 	getNote(id: number): Note | undefined {
+		console.log('---- GET NOTE ID',id);
 		return this.db.prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
 	}
 
 	updateNote(id: number, content: Pick<Note, 'html' | 'text'>): boolean {
+		console.log('---- UPDATE NOTE ID',id);
 		const sanitizedHtml = this.sanitizeContent(content.html);
 		const { title, excerpt } = this.processContent(sanitizedHtml, content.text);
 

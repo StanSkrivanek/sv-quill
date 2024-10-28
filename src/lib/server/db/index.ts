@@ -25,6 +25,8 @@ export async function initializeDatabase() {
 			console.log('Starting database initialization...');
 
 			// Get database path from environment
+			// TODO: add support for relative paths ./data/{dbname}.db
+
 			const dbPath = env.DB_PATH || './data/content.db';
 			console.log('Database path:', dbPath);
 
