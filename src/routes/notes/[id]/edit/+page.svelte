@@ -33,7 +33,7 @@
 	}
 
 	async function handleSave() {
-		if (!editorContent.html.trim()) {
+		if (editorContent.text.trim() === '' || editorContent.html === '<p></p>') {
 			errorMessage = 'Content cannot be empty';
 			saveStatus = 'error';
 			return;
@@ -61,7 +61,8 @@
 				if (!response.ok) {
 					throw new Error('Failed to save note');
 				}
-
+				// Redirect to the list of notes
+				goto('/notes');
 				// The redirect will happen automatically
 			} catch (error) {
 				console.error('Error saving note:', error);
