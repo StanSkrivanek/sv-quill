@@ -154,84 +154,66 @@
 				quill.root.innerHTML = DOMPurify.sanitize(value);
 			}
 
-			// Function to remove empty paragraphs and paragraphs that contain only <br>
-			function removeEmptyParagraphs(html: string): string {
-				const parser = new DOMParser();
-				const doc = parser.parseFromString(html, 'text/html');
-				doc.querySelectorAll('p').forEach((p) => {
-					// Remove all <br> tags and whitespace
-					const innerContent = p.innerHTML.replace(/<br\s*\/?>/gi, '').trim();
-					// Remove paragraph if empty after removing <br> tags
-					if (!innerContent) {
-						p.remove();
-					}
+				// Handle content changes
+				quill.on('text-change', () => {
+					const content = quill.root.innerHTML;
+
+					const sanitizedContent = DOMPurify.sanitize(content, {
+						ALLOWED_TAGS: [
+							'p',
+							'br',
+							'strong',
+							'em',
+							'u',
+							's',
+							'h1',
+							'h2',
+							'h3',
+							'h4',
+							'h5',
+							'h6',
+							'ol',
+							'ul',
+							'li',
+							'blockquote',
+							'pre',
+							'code',
+							'a',
+							'img',
+							'video',
+							'span',
+							'sub',
+							'super',
+							'div'
+						],
+						ALLOWED_ATTR: [
+							'href',
+							'src',
+							'alt',
+							'class',
+							'style',
+							'target',
+							'controls',
+							'width',
+							'height'
+						],
+						ALLOWED_STYLES: [
+							'color',
+							'background-color',
+							'text-align',
+							'font-size',
+							'font-family',
+							'margin',
+							'margin-left',
+							'padding'
+						]
+					});
+
+					dispatch('change', {
+						html: sanitizedContent,
+						text: quill.getText()
+					});
 				});
-				return doc.body.innerHTML;
-			}
-
-			// Handle content changes
-			quill.on('text-change', () => {
-				const content = quill.root.innerHTML;
-
-				// Remove empty paragraphs
-				const contentWithoutEmptyP = removeEmptyParagraphs(content);
-
-				const sanitizedContent = DOMPurify.sanitize(contentWithoutEmptyP, {
-					ALLOWED_TAGS: [
-						'p',
-						'br',
-						'strong',
-						'em',
-						'u',
-						's',
-						'h1',
-						'h2',
-						'h3',
-						'h4',
-						'h5',
-						'h6',
-						'ol',
-						'ul',
-						'li',
-						'blockquote',
-						'pre',
-						'code',
-						'a',
-						'img',
-						'video',
-						'span',
-						'sub',
-						'super',
-						'div'
-					],
-					ALLOWED_ATTR: [
-						'href',
-						'src',
-						'alt',
-						'class',
-						'style',
-						'target',
-						'controls',
-						'width',
-						'height'
-					],
-					ALLOWED_STYLES: [
-						'color',
-						'background-color',
-						'text-align',
-						'font-size',
-						'font-family',
-						'margin',
-						'margin-left',
-						'padding'
-					]
-				});
-
-				dispatch('change', {
-					html: sanitizedContent,
-					text: quill.getText()
-				});
-			});
 
 			isEditorReady = true;
 		}
