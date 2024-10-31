@@ -4,8 +4,8 @@
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 
 	let editorContent = $state({
-		html: '<h1>Note Title</h1>\n<p>Start writing your note here...</p>',
-		text: 'Note Title\nStart writing your note here...'
+		html: '',
+		text: ''
 	});
 
 	let isSaving = $state(false);
@@ -18,7 +18,7 @@
 	}
 
 	async function handleSave() {
-		if (!editorContent.html.trim()) {
+		if ( editorContent.text.trim() === '' || editorContent.html === '<p></p>') {
 			errorMessage = 'Content cannot be empty';
 			saveStatus = 'error';
 			return;
@@ -42,7 +42,9 @@
 					throw new Error('Failed to save note');
 				}
 
-				// The redirect will happen automatically
+				 // Redirect to the list of notes
+				goto('/notes');
+
 			} catch (error) {
 				console.error('Error saving note:', error);
 				saveStatus = 'error';

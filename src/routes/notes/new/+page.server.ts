@@ -1,5 +1,4 @@
 import { NotesHandler } from '$lib/server/notes';
-import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
@@ -9,8 +8,8 @@ export const actions: Actions = {
 		const text = formData.get('text')?.toString() || '';
 
 		const notesHandler = new NotesHandler();
-		const noteId = notesHandler.saveNote({ html, text });
+		notesHandler.saveNote({ html, text });
 
-		throw redirect(303, `/notes/${noteId}`);
+		return; // Return without redirecting
 	}
 };
