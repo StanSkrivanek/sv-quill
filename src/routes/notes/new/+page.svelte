@@ -64,7 +64,7 @@
 	{/if}
 </svelte:head>
 
-<div class="container mx-auto max-w-4xl px-4 py-8">
+<div class="container mx-auto max-w-6xl px-4 py-8">
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-2xl font-bold">New Note</h1>
 

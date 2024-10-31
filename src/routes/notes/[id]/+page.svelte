@@ -5,7 +5,7 @@
 	interface Props {
 		data: PageData;
 	}
-	
+
 	let { data }: Props = $props();
 	let isDeleting = $state(false);
 	let showModal = $state(false);
@@ -58,7 +58,7 @@
 	}
 </script>
 
-<div class="container mx-auto max-w-4xl px-4 py-8">
+<div class="container mx-auto max-w-6xl px-4 py-8">
 	<div class="mb-8 flex items-center justify-between">
 		<button
 			onclick={handleBackToList}
@@ -200,7 +200,10 @@
 		margin-top: 1.25em;
 		margin-bottom: 1.25em;
 	}
-
+	/* Remove line breaks inside paragraphs */
+	:global(.prose p > br) {
+		display: none;
+	}
 	:global(.prose a) {
 		color: rgb(234, 88, 12);
 		text-decoration: underline;
@@ -254,9 +257,12 @@
 	}
 
 	:global(.prose img) {
-		margin-top: 2em;
-		margin-bottom: 2em;
+		/* margin-top: 2em;
+		margin-bottom: 2em; */
 		border-radius: 0.375rem;
+		max-width: 100%;
+		height: auto;
+		margin-inline: auto;
 	}
 
 	:global(.prose video) {

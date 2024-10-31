@@ -43,7 +43,15 @@
 		['link', 'image', 'video'],
 		['clean']
 	];
-
+	// Convert image to base64
+	async function convertToBase64(file: File): Promise<string> {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.readAsDataURL(file);
+			reader.onload = () => resolve(reader.result as string);
+			reader.onerror = (error) => reject(error);
+		});
+	}
 	// Image upload handler
 	const imageHandler = () => {
 		const input = document.createElement('input');
@@ -55,11 +63,25 @@
 			const file = input.files?.[0];
 			if (file) {
 				try {
-					// Here you would typically upload the file to your server
-					// and get back a URL. This is a placeholder for that process.
-					const imageUrl = await uploadImage(file);
-					const range = quill.getSelection();
-					quill.insertEmbed(range.index, 'image', imageUrl);
+					// Check file size (limit to 200KB)
+					const maxSizeKB = 200;
+					if (file.size > maxSizeKB * 1024) {
+						showPopup(`Image size should not exceed ${maxSizeKB}KB`);
+						return;
+					}
+
+					// Check image dimensions (limit to 960x960)
+					const maxWidth = 1280;
+					const maxHeight = 960;
+					const image = new Image();
+					image.src = URL.createObjectURL(file);
+					image.onload = () => {
+						if (image.width > maxWidth || image.height > maxHeight) {
+							showPopup(`Image dimensions should not exceed ${maxWidth}x${maxHeight}px`);
+							return;
+						}
+						convertAndInsertImage(file);
+					};
 				} catch (error) {
 					console.error('Error uploading image:', error);
 				}
@@ -67,11 +89,38 @@
 		};
 	};
 
-	// Image upload function (implement according to your backend)
-	async function uploadImage(file: File) {
-		// Implement your image upload logic here
-		// Return the URL of the uploaded image
-		throw new Error('Image upload not implemented');
+	// Convert image to base64 and insert into editor
+	async function convertAndInsertImage(file: File) {
+		const imageUrl = await convertToBase64(file);
+		const range = quill.getSelection();
+		quill.insertEmbed(range.index, 'image', imageUrl);
+	}
+
+	// Show popup
+	function showPopup(message: string) {
+		const popup = document.createElement('div');
+		popup.className =
+			'popup fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50';
+
+		const popupContent = document.createElement('div');
+		popupContent.className = 'bg-white p-6 rounded-lg shadow-lg text-center';
+
+		const messageText = document.createElement('p');
+		messageText.innerText = message;
+
+		const closeButton = document.createElement('button');
+		closeButton.className = 'mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-00';
+		closeButton.innerText = 'Close';
+		closeButton.onclick = () => popup.remove();
+
+		popupContent.appendChild(messageText);
+		popupContent.appendChild(closeButton);
+		popup.appendChild(popupContent);
+		document.body.appendChild(popup);
+
+		setTimeout(() => {
+			popup.remove();
+		}, 6000); // Auto-close after 3 seconds
 	}
 
 	onMount(async () => {
@@ -105,10 +154,29 @@
 				quill.root.innerHTML = DOMPurify.sanitize(value);
 			}
 
+			// Function to remove empty paragraphs and paragraphs that contain only <br>
+			function removeEmptyParagraphs(html: string): string {
+				const parser = new DOMParser();
+				const doc = parser.parseFromString(html, 'text/html');
+				doc.querySelectorAll('p').forEach((p) => {
+					// Remove all <br> tags and whitespace
+					const innerContent = p.innerHTML.replace(/<br\s*\/?>/gi, '').trim();
+					// Remove paragraph if empty after removing <br> tags
+					if (!innerContent) {
+						p.remove();
+					}
+				});
+				return doc.body.innerHTML;
+			}
+
 			// Handle content changes
 			quill.on('text-change', () => {
 				const content = quill.root.innerHTML;
-				const sanitizedContent = DOMPurify.sanitize(content, {
+
+				// Remove empty paragraphs
+				const contentWithoutEmptyP = removeEmptyParagraphs(content);
+
+				const sanitizedContent = DOMPurify.sanitize(contentWithoutEmptyP, {
 					ALLOWED_TAGS: [
 						'p',
 						'br',
@@ -187,12 +255,12 @@
 		/* border: 1px solid #ccc; */
 		border-radius: 0.25rem;
 		overflow: hidden;
+		min-height: 80svh;
 	}
 
 	.rich-text-editor :global(.ql-container) {
 		height: calc(100% - 70px);
 		border: none;
-		/* background-color: beige; */
 	}
 
 	/* Add some basic styling for the toolbar */
@@ -216,8 +284,9 @@
 
 	/* Style for the editor area */
 	.rich-text-editor :global(.ql-editor) {
-		min-height: 200px;
+		min-height: 100%;
 		font-size: 16px;
 		line-height: 1.5;
 	}
+
 </style>
