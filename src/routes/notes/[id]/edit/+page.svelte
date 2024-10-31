@@ -23,6 +23,10 @@
 	let isDeleting = $state(false);
 	let errorMessage = $state('');
 
+	let showModal = $state(false);
+	let modalMessage = $state('');
+	let modalAction: (() => void) | null = null;
+
 	function handleContentChange(event: CustomEvent<{ html: string; text: string }>) {
 		const { html, text } = event.detail;
 		editorContent = { html, text };
@@ -73,33 +77,41 @@
 		goto('/notes');
 	}
 
-	function handleDeleteNote(event: Event) {
-		event.preventDefault(); // Prevent default form submission
-		const confirmed = confirm('Are you sure you want to delete this note?');
-		if (confirmed) {
+	function openModal(message: string, action: () => void) {
+		modalMessage = message;
+		modalAction = action;
+		showModal = true;
+	}
+
+	function closeModal() {
+		showModal = false;
+		modalMessage = '';
+		modalAction = null;
+	}
+
+	function handleDeleteNote() {
+		openModal('Are you sure you want to delete this note?', async () => {
 			isDeleting = true;
 			const formData = new FormData();
 			formData.append('id', (data.note?.id ?? '').toString());
 
-			fetch('?/delete', {
-				method: 'POST',
-				body: formData
-			})
-				.then((res) => {
-					if (res.ok) {
-						goto('/notes');
-					} else {
-						alert('Failed to delete the note');
-					}
-				})
-				.catch((err) => {
-					console.error(err);
-					alert('Failed to delete the note');
-				})
-				.finally(() => {
-					isDeleting = false;
+			try {
+				const res = await fetch('?/delete', {
+					method: 'POST',
+					body: formData
 				});
-		}
+				if (res.ok) {
+					goto('/notes');
+				} else {
+					openModal('Failed to delete the note', () => closeModal());
+				}
+			} catch (err) {
+				console.error(err);
+				openModal('Failed to delete the note', () => closeModal());
+			} finally {
+				isDeleting = false;
+			}
+		});
 	}
 </script>
 
@@ -170,43 +182,34 @@
 				{/if}
 			</button>
 			<!-- delete button -->
-			<form onsubmit={handleDeleteNote}>
-				<input type="hidden" name="id" value={data.note.id} />
-				<button
-					onclick={handleDeleteNote}
-					class="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-white
-								  transition-colors duration-200 hover:bg-red-700 focus:outline-none
-								  focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed
-								  disabled:opacity-50"
-					disabled={isDeleting}
-				>
-					{#if isDeleting}
-						<svg
-							class="-ml-1 mr-2 h-4 w-4 animate-spin text-white"
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-						>
-							<circle
-								class="opacity-25"
-								cx="12"
-								cy="12"
-								r="10"
-								stroke="currentColor"
-								stroke-width="4"
-							></circle>
-							<path
-								class="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-							></path>
-						</svg>
-						Deleting...
-					{:else}
-						Delete Note
-					{/if}
-				</button>
-			</form>
+
+			<button
+				onclick={handleDeleteNote}
+				class="ml-4 rounded-md bg-red-100 px-4 py-2 text-sm font-medium
+						text-red-700 transition-colors hover:bg-red-200 hover:text-red-800
+							focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2"
+				disabled={isDeleting}
+			>
+				{#if isDeleting}
+					<svg
+						class="-ml-1 mr-2 h-4 w-4 animate-spin text-white"
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+					>
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+						></circle>
+						<path
+							class="opacity-75"
+							fill="currentColor"
+							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+						></path>
+					</svg>
+					Deleting...
+				{:else}
+					Delete Note
+				{/if}
+			</button>
 		</div>
 	</div>
 
@@ -220,3 +223,33 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Modal Component -->
+{#if showModal}
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+		<div class="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+			<p class="mb-4">{modalMessage}</p>
+			<div class="flex justify-end gap-4">
+				<button
+					onclick={closeModal}
+					class="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors
+						   hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500
+						   focus:ring-offset-2"
+				>
+					Cancel
+				</button>
+				<button
+					onclick={() => {
+						modalAction?.();
+						closeModal();
+					}}
+					class="ml-4 rounded-md bg-red-100 px-4 py-2 text-sm font-medium
+							text-red-700 transition-colors hover:bg-red-200 hover:text-red-800
+							focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2"
+				>
+					Confirm
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

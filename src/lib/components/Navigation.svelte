@@ -11,7 +11,7 @@
     let currentPath = $derived($page.url.pathname);
 </script>
 
-<nav class="bg-white shadow-md">
+<nav class="bg-white shadow-md sticky top-0">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
             <!-- Logo/Brand -->

@@ -28,6 +28,7 @@
 
 	// Quill configuration
 	const toolbarOptions = [
+		[{ font: [] }],
 		[{ header: [1, 2, 3, 4, 5, 6, false] }],
 		['bold', 'italic', 'underline', 'strike'],
 		[{ list: 'ordered' }, { list: 'bullet' }],
@@ -38,12 +39,10 @@
 		[{ indent: '-1' }, { indent: '+1' }],
 		[{ direction: 'rtl' }],
 		// [{ 'size': ['small', false, 'large', 'huge'] }],
-		[{ font: [] }],
 		[{ align: [] }],
 		['link', 'image', 'video'],
 		['clean']
 	];
-
 
 	// Image upload handler
 	const imageHandler = () => {
@@ -76,7 +75,7 @@
 	}
 
 	onMount(async () => {
-		if (browser) {      
+		if (browser) {
 			// Dynamically import Quill and DOMPurify only on the client side
 			const [quillModule, domPurifyModule] = await Promise.all([
 				import('quill'),
@@ -185,15 +184,15 @@
 
 <style>
 	.rich-text-editor {
-		border: 1px solid #ccc;
-		border-radius: 4px;
+		/* border: 1px solid #ccc; */
+		border-radius: 0.25rem;
 		overflow: hidden;
 	}
 
 	.rich-text-editor :global(.ql-container) {
 		height: calc(100% - 70px);
-    border: none;
-    background-color: beige;
+		border: none;
+		/* background-color: beige; */
 	}
 
 	/* Add some basic styling for the toolbar */
@@ -203,6 +202,16 @@
 		/* position: sticky;
 		top: 0; */
 		z-index: 1;
+	}
+
+	/* add hover to active and hovered buttons*/
+	.rich-text-editor :global([type='button']) {
+		width: 24px;
+		height: 24px;
+	}
+	.rich-text-editor :global([type='button']:hover) {
+		background-color: #f0f0f0;
+		color: red !important;
 	}
 
 	/* Style for the editor area */

@@ -1,13 +1,9 @@
 
 <script>
-  //import { getAllNotes } from '$lib/server/db';
-  
-  // let { data } = $props();
-  
-//  let notesCount = $derived(data.notes.length);
+
 </script>
 
-<div class="hero">
+<div class="hero ">
   <div class="hero-content">
     <h1>Simply Notes</h1>
     <p class="tagline">Capture your thoughts, simply and beautifully</p>
@@ -69,7 +65,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 4rem 2rem;
-    min-height: 80vh;
+    min-height: 50vh;
     gap: 4rem;
   }
 
