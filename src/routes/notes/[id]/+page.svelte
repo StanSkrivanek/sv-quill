@@ -5,8 +5,9 @@
 	interface Props {
 		data: PageData;
 	}
-
 	let { data }: Props = $props();
+	console.log(data);
+	let isDeleting = $state(false);
 
 	function formatDate(dateString: string) {
 		return new Date(dateString).toLocaleString();
@@ -14,6 +15,35 @@
 
 	function handleBackToList() {
 		goto('/notes');
+	}
+
+	function handleDeleteNote(event: Event) {
+		event.preventDefault(); // Prevent default form submission
+		const confirmed = confirm('Are you sure you want to delete this note?');
+		if (confirmed) {
+			isDeleting = true;
+			const formData = new FormData();
+			formData.append('id', (data.note?.id ?? '').toString());
+			console.log("FORM DATA",...formData);
+			fetch('?/delete', {
+				method: 'POST',
+				body: formData
+			})
+				.then((res) => {
+					if (res.ok) {
+						goto('/notes');
+					} else {
+						alert('Failed to delete the note');
+					}
+				})
+				.catch((err) => {
+					console.error(err);
+					alert('Failed to delete the note');
+				})
+				.finally(() => {
+					isDeleting = false;
+				});
+		}
 	}
 </script>
 
@@ -39,14 +69,53 @@
 			</svg>
 			Back to List
 		</button>
-		<button
-			onclick={() => data.note.id !== undefined && goto(`/notes/${data.note.id}/edit`)}
-			class="ml-4 rounded-md bg-orange-100 px-4 py-2 text-sm font-medium
-				text-orange-700 transition-colors hover:bg-green-200 hover:text-green-700
-				focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
-		>
-			Edit
-		</button>
+		<div class="flex items-center">
+			<button
+				onclick={() => data.note.id !== undefined && goto(`/notes/${data.note.id}/edit`)}
+				class="ml-4 rounded-md bg-orange-100 px-4 py-2 text-sm font-medium
+			text-orange-700 transition-colors hover:bg-green-200 hover:text-green-700
+			focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
+			>
+				Edit
+			</button>
+			<!-- delete button -->
+			<form onsubmit={handleDeleteNote}>
+				<input type="hidden" name="id" value={data.note.id} />
+				<button
+					onclick={handleDeleteNote}
+					class="ml-4 rounded-md bg-red-100 px-4 py-2 text-sm font-medium
+		text-red-700 transition-colors hover:bg-red-200 hover:text-red-800
+		focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2"
+					disabled={isDeleting}
+				>
+					{#if isDeleting}
+						<svg
+							class="-ml-1 mr-2 h-4 w-4 animate-spin text-white"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+						>
+							<circle
+								class="opacity-25"
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								stroke-width="4"
+							></circle>
+							<path
+								class="opacity-75"
+								fill="currentColor"
+								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+							></path>
+						</svg>
+						Deleting...
+					{:else}
+						Delete
+					{/if}
+				</button>
+			</form>
+		</div>
 	</div>
 
 	<div class="overflow-hidden rounded-lg bg-white shadow-lg">

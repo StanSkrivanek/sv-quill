@@ -1,4 +1,4 @@
-// CRUD Notes Handler
+// Notes API handler
 import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 import { getDatabase } from './db';
@@ -7,7 +7,7 @@ const window = new JSDOM('').window;
 const purify = DOMPurify(window);
 
 interface Note {
-	id?: number;
+	id: number;
 	title: string;
 	html: string;
 	text: string;
@@ -122,12 +122,12 @@ export class NotesHandler {
 	}
 
 	getNote(id: number): Note | undefined {
-		// console.log('---- GET NOTE ID',id);
+		console.log('---- GET NOTE ID',id);
 		return this.db.prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
 	}
 
 	updateNote(id: number, content: Pick<Note, 'html' | 'text'>): boolean {
-		// console.log('---- UPDATE NOTE ID',id);
+		console.log('---- UPDATE NOTE ID',id);
 		const sanitizedHtml = this.sanitizeContent(content.html);
 		const { title, excerpt } = this.processContent(sanitizedHtml, content.text);
 
@@ -143,8 +143,17 @@ export class NotesHandler {
 		return result.changes > 0;
 	}
 
+	// Method to delete a note by its ID
 	deleteNote(id: number): boolean {
-		const result = this.db.prepare('DELETE FROM notes WHERE id = ?').run(id);
+		// coerce the id to a number to ensure it is an integer value for the SQL query to execute properly eg.`3.0 -> 3`
+		 const noteId = parseInt(id.toString(), 10);
+		// Prepare SQL statement to delete a note where the id matches the given id
+		const stmt = this.db.prepare('DELETE FROM notes WHERE id = ?');
+
+		// Execute the prepared statement with the provided id
+		const result = stmt.run(noteId);
+
+		// Return a boolean value indicating whether the note was deleted successfully
 		return result.changes > 0;
 	}
 }

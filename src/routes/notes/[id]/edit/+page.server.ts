@@ -1,24 +1,16 @@
-import { error } from '@sveltejs/kit';
 import { NotesHandler } from '$lib/server/notes';
-import type { PageServerLoad } from './$types';
+import { error } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const noteId = parseInt(params.id);
-
-	if (isNaN(noteId)) {
-		throw error(400, 'Invalid note ID');
-	}
-
+export const load = async ({ params }) => {
+	const id = Number(params.id);
 	const notesHandler = new NotesHandler();
-	const note = notesHandler.getNote(noteId);
+	const note = notesHandler.getNote(id);
 
 	if (!note) {
 		throw error(404, 'Note not found');
 	}
 
-	return {
-		note
-	};
+	return { note };
 };
 
 export const actions = {
@@ -40,6 +32,23 @@ export const actions = {
 			return {
 				success: false,
 				error: error instanceof Error ? error.message : 'Failed to update content'
+			};
+		}
+	},
+	delete: async ({ request }) => {
+		try {
+			const id = (await request.formData()).get('id')?.toString();
+			console.log("🚀 ~ DELETE: ~ id:", id)
+			if (!id) throw new Error('Invalid ID');
+
+			const success = new NotesHandler().deleteNote(parseInt(id));
+
+			return { success };
+		} catch (error) {
+			console.error('Error deleting content:', error);
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to delete content'
 			};
 		}
 	}

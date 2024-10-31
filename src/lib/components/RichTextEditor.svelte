@@ -44,15 +44,6 @@
 		['clean']
 	];
 
-	// get toolbar height
-	const getToolbarHeight = () => {
-		const toolbar = document.querySelector('.ql-toolbar');
-		if (toolbar) {
-			const height = toolbar.getBoundingClientRect().height;
-			(toolbar as HTMLElement).style.setProperty('--toolbar-height', `${height}px`);
-		}
-		return 0;
-	};
 
 	// Image upload handler
 	const imageHandler = () => {
@@ -85,13 +76,12 @@
 	}
 
 	onMount(async () => {
-		if (browser) {
+		if (browser) {      
 			// Dynamically import Quill and DOMPurify only on the client side
 			const [quillModule, domPurifyModule] = await Promise.all([
 				import('quill'),
 				import('dompurify')
 			]);
-
 			// Get the default export from the modules
 			Quill = quillModule.default;
 			DOMPurify = domPurifyModule.default;
@@ -201,15 +191,17 @@
 	}
 
 	.rich-text-editor :global(.ql-container) {
-		height: calc(100% - var(--toolbar-height));
+		height: calc(100% - 70px);
+    border: none;
+    background-color: beige;
 	}
 
 	/* Add some basic styling for the toolbar */
 	.rich-text-editor :global(.ql-toolbar) {
 		border-bottom: 1px solid #ccc;
 		background-color: #f8f8f8;
-		position: sticky;
-		top: 0;
+		/* position: sticky;
+		top: 0; */
 		z-index: 1;
 	}
 

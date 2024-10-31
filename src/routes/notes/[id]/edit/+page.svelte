@@ -18,8 +18,9 @@
 		text: data.note.text
 	});
 
-	let isSaving = $state(false);
 	let saveStatus: 'idle' | 'saving' | 'error' = $state('idle');
+	let isSaving = $state(false);
+	let isDeleting = $state(false);
 	let errorMessage = $state('');
 
 	function handleContentChange(event: CustomEvent<{ html: string; text: string }>) {
@@ -41,7 +42,7 @@
 
 				const formData = new FormData();
 				if (data.note && data.note.id) {
-					formData.append('id', data.note.id.toString());
+					formData.append('id', (data.note?.id ?? '').toString());
 				} else {
 					throw new Error('Note ID is missing');
 				}
@@ -70,6 +71,35 @@
 
 	function handleCancel() {
 		goto('/notes');
+	}
+
+	function handleDeleteNote(event: Event) {
+		event.preventDefault(); // Prevent default form submission
+		const confirmed = confirm('Are you sure you want to delete this note?');
+		if (confirmed) {
+			isDeleting = true;
+			const formData = new FormData();
+			formData.append('id', (data.note?.id ?? '').toString());
+
+			fetch('?/delete', {
+				method: 'POST',
+				body: formData
+			})
+				.then((res) => {
+					if (res.ok) {
+						goto('/notes');
+					} else {
+						alert('Failed to delete the note');
+					}
+				})
+				.catch((err) => {
+					console.error(err);
+					alert('Failed to delete the note');
+				})
+				.finally(() => {
+					isDeleting = false;
+				});
+		}
 	}
 </script>
 
@@ -139,6 +169,44 @@
 					Save Note
 				{/if}
 			</button>
+			<!-- delete button -->
+			<form onsubmit={handleDeleteNote}>
+				<input type="hidden" name="id" value={data.note.id} />
+				<button
+					onclick={handleDeleteNote}
+					class="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-white
+								  transition-colors duration-200 hover:bg-red-700 focus:outline-none
+								  focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed
+								  disabled:opacity-50"
+					disabled={isDeleting}
+				>
+					{#if isDeleting}
+						<svg
+							class="-ml-1 mr-2 h-4 w-4 animate-spin text-white"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+						>
+							<circle
+								class="opacity-25"
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								stroke-width="4"
+							></circle>
+							<path
+								class="opacity-75"
+								fill="currentColor"
+								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+							></path>
+						</svg>
+						Deleting...
+					{:else}
+						Delete Note
+					{/if}
+				</button>
+			</form>
 		</div>
 	</div>
 
