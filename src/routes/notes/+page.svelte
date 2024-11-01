@@ -7,7 +7,8 @@
 	}
 	const initItemsPerPage = 5;
 	let { data }: Props = $props();
-	// Initialize state variables using $state()
+
+
 	let currentPage = $state(data.currentPage);
 	let itemsPerPage = $state(data.itemsPerPage || initItemsPerPage.toString());
 
@@ -119,26 +120,28 @@
 		<div class="grid gap-6">
 			{#each data.recentNotes as note}
 				<div class="rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-md">
-					<div class="flex items-start justify-between">
+					<div class=" items-start justify-between">
 						<div class="flex-1">
-							<h2 class="mb-2 text-xl font-semibold text-gray-900">
+							<h2 class=" pb-1 mb-3 text-xl font-semibold text-orange-600 border-b border-gray-200">
 								{note.title}
 							</h2>
 							<p class="mb-4 text-gray-600">
 								{note.excerpt}
 							</p>
+						</div>
+						<div class="flex items-end justify-between gap-2">
 							<p class="text-sm text-gray-500">
 								Created: {formatDate(note.created_at ?? '')}
 							</p>
+							<button
+								onclick={() => note.id !== undefined && handleReadNote(note.id)}
+								class="ml-4 rounded-md bg-blue-100 px-4 py-2 text-sm font-medium
+								 text-blue-700 transition-colors hover:bg-blue-200 hover:text-blue-600
+								 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
+							>
+								Read
+							</button>
 						</div>
-						<button
-							onclick={() => note.id !== undefined && handleReadNote(note.id)}
-							class="ml-4 rounded-md bg-blue-100 px-4 py-2 text-sm font-medium
-							 text-blue-700 transition-colors hover:bg-blue-200 hover:text-blue-600
-							 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
-						>
-							Read
-						</button>
 					</div>
 				</div>
 			{/each}
