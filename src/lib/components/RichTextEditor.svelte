@@ -1,11 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
-	// Event dispatcher for changes
-	// import { createEventDispatcher } from 'svelte';
-	// import { on } from 'svelte/events';
-
-	// Props
 
 	interface Props {
 		noteContent?: string;
@@ -13,7 +8,6 @@
 		placeholder?: string;
 		readonly?: boolean;
 		height?: string;
-		// onchange?: (event: CustomEvent<{ title?: string; html: string; text: string }>) => void;
 		onChange?: (details: { title: string, html: string, text: string, }) => void;
 	}
 
@@ -23,35 +17,31 @@
 		placeholder = 'Start writing your note...',
 		readonly = false,
 		height = '400px',
-		onChange = () => undefined // Default onchange handler
+		onChange = () => undefined
 	}: Props = $props();
-	// const dispatch = createEventDispatcher();
 
-	// Editor references
 	let Quill: any;
 	let DOMPurify: any;
 	let quill: any;
 	let editorElement = $state();
 	let isEditorReady = false;
 
-	// Quill configuration
 	const toolbarOptions = [
 		[{ font: [] }],
 		[{ header: [1, 2, 3, 4, 5, 6, false] }],
-		['bold', 'italic', 'underline', 'strike'],
+			['bold', 'italic', 'underline', 'strike'],
 		[{ list: 'ordered' }, { list: 'bullet' }],
 		['blockquote', 'code-block'],
-		[{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }],
+			[{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }],
 		[{ color: [] }, { background: [] }],
 		[{ script: 'sub' }, { script: 'super' }],
 		[{ indent: '-1' }, { indent: '+1' }],
 		[{ direction: 'rtl' }],
-		// [{ 'size': ['small', false, 'large', 'huge'] }],
 		[{ align: [] }],
 		['link', 'image', 'video'],
 		['clean']
 	];
-	// Convert image to base64
+
 	async function convertToBase64(file: File): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const reader = new FileReader();
@@ -60,7 +50,7 @@
 			reader.onerror = (error) => reject(error);
 		});
 	}
-	// Image upload handler
+
 	const imageHandler = () => {
 		const input = document.createElement('input');
 		input.setAttribute('type', 'file');
@@ -71,14 +61,12 @@
 			const file = input.files?.[0];
 			if (file) {
 				try {
-					// Check file size (limit to 200KB)
 					const maxSizeKB = 200;
 					if (file.size > maxSizeKB * 1024) {
 						showPopup(`Image size should not exceed ${maxSizeKB}KB`);
 						return;
 					}
 
-					// Check image dimensions (limit to 960x960)
 					const maxWidth = 1280;
 					const maxHeight = 960;
 					const image = new Image();
@@ -97,14 +85,12 @@
 		};
 	};
 
-	// Convert image to base64 and insert into editor
 	async function convertAndInsertImage(file: File) {
 		const imageUrl = await convertToBase64(file);
 		const range = quill.getSelection();
 		quill.insertEmbed(range.index, 'image', imageUrl);
 	}
 
-	// Show popup
 	function showPopup(message: string) {
 		const popup = document.createElement('div');
 		popup.className =
@@ -128,21 +114,18 @@
 
 		setTimeout(() => {
 			popup.remove();
-		}, 6000); // Auto-close after 3 seconds
+		}, 6000);
 	}
 
 	onMount(async () => {
 		if (browser) {
-			// Dynamically import Quill and DOMPurify only on the client side
 			const [quillModule, domPurifyModule] = await Promise.all([
 				import('quill'),
 				import('dompurify')
 			]);
-			// Get the default export from the modules
 			Quill = quillModule.default;
 			DOMPurify = domPurifyModule.default;
 
-			// Initialize Quill
 			quill = new Quill(editorElement, {
 				modules: {
 					toolbar: {
@@ -157,12 +140,10 @@
 				theme: 'snow'
 			});
 
-			// Set initial content
 			if (noteContent) {
 				quill.root.innerHTML = DOMPurify.sanitize(noteContent);
 			}
 
-			// Handle content changes
 			quill.on('text-change', () => {
 				const content = quill.root.innerHTML;
 
@@ -217,12 +198,10 @@
 					]
 				});
 
-				// dispatch('change', {
 				onChange({
 					title,
 					html: sanitizedContent,
 					text: quill.getText()
-
 				});
 			});
 
@@ -244,7 +223,6 @@
 			bind:value={title}
 			placeholder="Enter note title"
 			oninput={() =>
-				// dispatch('change', { title, html: quill.root.innerHTML, text: quill.getText() })}
 				onChange({ title, html: quill.root.innerHTML, text: quill.getText() })}
 		/>
 		<div bind:this={editorElement}></div>
@@ -253,7 +231,6 @@
 
 <style>
 	.rich-text-editor {
-		/* border: 1px solid #ccc; */
 		border-radius: 0.25rem;
 		overflow: hidden;
 		min-height: 80svh;
@@ -264,14 +241,12 @@
 		border: none;
 	}
 
-	/* Add some basic styling for the toolbar */
 	.rich-text-editor :global(.ql-toolbar) {
 		border-bottom: 1px solid #ccc;
 		background-color: #f8f8f8;
 		z-index: 1;
 	}
 
-	/* add hover to active and hovered buttons*/
 	.rich-text-editor :global([type='button']) {
 		width: 24px;
 		height: 24px;
@@ -281,14 +256,12 @@
 		color: red !important;
 	}
 
-	/* Style for the editor area */
 	.rich-text-editor :global(.ql-editor) {
 		min-height: 100%;
 		font-size: 16px;
 		line-height: 1.5;
 	}
 
-	/* Style for the title input */
 	.rich-text-editor input[type='text'] {
 		width: 100%;
 		padding: 0.5rem;

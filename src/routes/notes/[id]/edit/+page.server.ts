@@ -39,7 +39,6 @@ export const actions = {
 	delete: async ({ request }) => {
 		try {
 			const id = (await request.formData()).get('id')?.toString();
-			// console.log('🚀 ~ DELETE: ~ id:', id);
 			if (!id) throw new Error('Invalid ID');
 
 			const success = new NotesHandler().deleteNote(parseInt(id));

@@ -7,7 +7,7 @@
 	}
 
 	let { data }: Props = $props();
-	console.log("🚀 ~ data:", data)
+	
 	let isDeleting = $state(false);
 	let showModal = $state(false);
 	let modalMessage = $state('');

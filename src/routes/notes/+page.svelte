@@ -7,9 +7,7 @@
 	}
 	const initItemsPerPage = 5;
 	let { data }: Props = $props();
-	console.log("🚀 ~ data:", data.recentNotes[0])
-
-
+	
 	let currentPage = $state(data.currentPage);
 	let itemsPerPage = $state(data.itemsPerPage || initItemsPerPage.toString());
 

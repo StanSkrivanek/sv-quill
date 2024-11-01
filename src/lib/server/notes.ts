@@ -19,23 +19,16 @@ interface Note {
 export class NotesHandler {
 	private db;
 	constructor() {
-		console.log('Initializing NotesHandler...');
 		try {
 			this.db = getDatabase();
-			console.log('Database connection obtained successfully');
 		} catch (error) {
 			console.error('Error in NotesHandler constructor:', error);
 			throw error;
 		}
 	}
-	// Extract title (first H1) and excerpt from HTML content
-	private processContent(html: string, text: string) {
-		// Create a DOM parser to extract the first H1
-		// const dom = new JSDOM(html);
-		// console.log('🚀 ~ NotesHandler ~ processContent ~ dom:', dom);
-		// Create excerpt from text (non-HTML) content
-		const excerpt = text.length > 300 ? `${text.slice(0, 240)}...` : text;
 
+	private processContent(html: string, text: string) {
+		const excerpt = text.slice(0, 240) + (text.length > 300 ? '...' : '');
 		return { excerpt };
 	}
 
@@ -79,23 +72,13 @@ export class NotesHandler {
 				'width',
 				'height'
 			]
-			// ALLOWED_STYLES: [
-			// 	'color',
-			// 	'background-color',
-			// 	'text-align',
-			// 	'font-size',
-			// 	'font-family',
-			// 	'margin',
-			// 	'margin-left',
-			// 	'padding'
-			// ]
 		});
 	}
 
 	saveNote(note: { title: string; html: string; text: string }) {
 		const sanitizedHtml = this.sanitizeContent(note.html);
 		const title = note.title;
-		const {  excerpt } = this.processContent(sanitizedHtml, note.text);
+		const { excerpt } = this.processContent(sanitizedHtml, note.text);
 
 		const stmt = this.db.prepare(
 			`
@@ -121,15 +104,13 @@ export class NotesHandler {
 	}
 
 	getNote(id: number): Note | undefined {
-		// console.log('---- GET NOTE ID', id);
 		return this.db.prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
 	}
 
 	updateNote(id: number, note: { title: string; html: string; text: string }): boolean {
-		// console.log('---- UPDATE NOTE ID', id);
 		const sanitizedHtml = this.sanitizeContent(note.html);
 		const title = note.title;
-		const {excerpt } = this.processContent(sanitizedHtml, note.text);
+		const { excerpt } = this.processContent(sanitizedHtml, note.text);
 
 		const stmt = this.db.prepare(
 			`
@@ -143,17 +124,10 @@ export class NotesHandler {
 		return result.changes > 0;
 	}
 
-	// Method to delete a note by its ID
 	deleteNote(id: number): boolean {
-		// coerce the id to a number to ensure it is an integer value for the SQL query to execute properly eg.`3.0 -> 3`
 		const noteId = parseInt(id.toString(), 10);
-		// Prepare SQL statement to delete a note where the id matches the given id
 		const stmt = this.db.prepare('DELETE FROM notes WHERE id = ?');
-
-		// Execute the prepared statement with the provided id
 		const result = stmt.run(noteId);
-
-		// Return a boolean value indicating whether the note was deleted successfully
 		return result.changes > 0;
 	}
 }
