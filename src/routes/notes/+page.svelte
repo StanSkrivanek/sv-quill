@@ -7,6 +7,11 @@
 	}
 
 	let { data }: Props = $props();
+	console.log("🚀 ~ data:", data);
+
+	// Initialize state variables using $state()
+	let currentPage = $state(data.currentPage ?? 1);
+	let itemsPerPage = $state(data.itemsPerPage ?? 5);
 
 	function formatDate(dateString: string) {
 		return new Date(dateString).toLocaleString();
@@ -19,16 +24,28 @@
 	function handleReadNote(id: number) {
 		goto(`/notes/${id}`);
 	}
+
+	function changePage(page: number) {
+		if (page < 1 || page > data.totalPages) return; // Prevent invalid page numbers
+		currentPage = page;
+		goto(`/notes?page=${page}&itemsPerPage=${itemsPerPage}`);
+	}
+
+	function changeItemsPerPage(event: Event) {
+		itemsPerPage = parseInt((event.target as HTMLSelectElement).value);
+		currentPage = 1; // Reset to first page when items per page changes
+		goto(`/notes?page=1&itemsPerPage=${itemsPerPage}`);
+	}
 </script>
 
 <div class="container mx-auto max-w-6xl px-4 py-8">
 	<div class="mb-8 flex items-center justify-between">
-		<h1 class="text-2xl font-bold">My Notes</h1>
+		<h1 class="text-2xl font-bold text-gray-800">My Notes</h1>
 
 		<button
 			onclick={handleCreateNew}
-			class="flex items-center gap-2 rounded-md bg-green-300 px-4
-             py-2 text-green-900 hover:bg-green-400 hover:text-green-50 focus:outline-none
+			class="flex items-center gap-2 rounded-md bg-green-500 px-4
+             py-2 text-white hover:bg-green-600 focus:outline-none
              focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
 		>
 			<svg
@@ -45,6 +62,27 @@
 			</svg>
 			New Note
 		</button>
+	</div>
+
+	<div class="mb-4 flex items-center justify-between">
+			<div class="flex items-center gap-2">
+			<label for="itemsPerPage" class="text-gray-700">Items per page:</label>
+			<select id="itemsPerPage" bind:value={itemsPerPage} onchange={changeItemsPerPage} class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+				<option value="3">3</option>
+				<option value="5">5</option>
+				<option value="10">10</option>
+				<option value="25">25</option>
+			</select>
+		</div>
+			<div class="flex items-center gap-2">
+			<button onclick={() => changePage(currentPage - 1)} disabled={currentPage === 1} class="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50">
+				Previous
+			</button>
+			<span class="text-gray-700">Page {currentPage}</span>
+			<button onclick={() => changePage(currentPage + 1)} disabled={currentPage === data.totalPages} class="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50">
+				Next
+			</button>
+		</div>
 	</div>
 
 	{#if data.recentNotes.length === 0}
@@ -85,8 +123,8 @@
 						<button
 							onclick={() => note.id !== undefined && handleReadNote(note.id)}
 							class="ml-4 rounded-md bg-blue-100 px-4 py-2 text-sm font-medium
-					 text-blue-700 transition-colors hover:bg-blue-200 hover:text-blue-600
-					 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
+							 text-blue-700 transition-colors hover:bg-blue-200 hover:text-blue-600
+							 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
 						>
 							Read
 						</button>

@@ -13,3 +13,7 @@ npm run dev
 
 - Create, Edit and Delete notes
 - saving images in db together with HTML content as base64.
+
+## TODO
+
+- add pagination to note list with option how many notes to show per page (5, 10, 20, 50)
