@@ -31,11 +31,10 @@ export class NotesHandler {
 	// Extract title (first H1) and excerpt from HTML content
 	private processContent(html: string, text: string) {
 		// Create a DOM parser to extract the first H1
-		const dom = new JSDOM(html);
-		console.log('🚀 ~ NotesHandler ~ processContent ~ dom:', dom);
-
+		// const dom = new JSDOM(html);
+		// console.log('🚀 ~ NotesHandler ~ processContent ~ dom:', dom);
 		// Create excerpt from text (non-HTML) content
-		const excerpt = text.length > 150 ? `${text.slice(0, 147)}...` : text;
+		const excerpt = text.length > 300 ? `${text.slice(0, 240)}...` : text;
 
 		return { excerpt };
 	}
