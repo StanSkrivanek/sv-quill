@@ -4,6 +4,7 @@
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 
 	let editorContent = $state({
+		title: '',
 		html: '',
 		text: ''
 	});
@@ -12,17 +13,22 @@
 	let saveStatus: 'idle' | 'saving' | 'error' = $state('idle');
 	let errorMessage = $state('');
 
-	function handleContentChange(event: CustomEvent<{ html: string; text: string }>) {
-		const { html, text } = event.detail;
-		editorContent = { html, text };
+	function handleContentChange(event: CustomEvent<{ title: string; html: string; text: string }>) {
+		const { title, html, text } = event.detail;
+		editorContent = { title, html, text };
 	}
 
 	async function handleSave() {
-		if ( editorContent.text.trim() === '' || editorContent.html === '<p></p>') {
-			errorMessage = 'Content cannot be empty';
+		if (editorContent.title.trim() === '') {
+			errorMessage = 'Title cannot be empty';
 			saveStatus = 'error';
 			return;
 		}
+		if (editorContent.text.trim() === '' || editorContent.html === '<p></p>') {
+			errorMessage = 'Content cannot be empty';
+			saveStatus = 'error';
+			return;
+			}
 
 		if (browser) {
 			try {
@@ -30,6 +36,7 @@
 				isSaving = true;
 
 				const formData = new FormData();
+				formData.append('title', editorContent.title);
 				formData.append('html', editorContent.html);
 				formData.append('text', editorContent.text);
 
@@ -132,7 +139,7 @@
 	{#if browser}
 		<div class="overflow-hidden rounded-lg bg-white shadow-lg">
 			<RichTextEditor
-				value={editorContent.html}
+				noteContent={editorContent.html}
 				placeholder="Start writing your note..."
 				on:change={handleContentChange}
 			/>
