@@ -18,7 +18,14 @@ npm install
 mkdir data
 ```
 
-3. Run dev server
+3. create a `.env` file in the project root and add the following:
+
+```bash
+# .env
+DB_PATH="./data/content.db"
+```
+
+4. Run dev server
 
 ```bash
 npm run dev
