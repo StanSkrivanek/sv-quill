@@ -2,14 +2,27 @@
 
 A simple note app demo using Svelte 5 and Quill to store notes in SQLite database.
 
+---
+
 ## Installation
+
+1. Install dependencies
 
 ```bash
 npm install
+```
+
+2. Create empty folder `data` in the project root.
+
+3. Run dev server
+
+```bash
 npm run dev
 ```
 
 SQLite database will be created in the `data` folder of the project root automatically.
+
+---
 
 ## Features
 
@@ -18,7 +31,3 @@ SQLite database will be created in the `data` folder of the project root automat
 - saving images in db together with HTML content as base64.
 - saving notes in SQLite database
 - simple pagination
-
-## TODO
-
-- [ ] Add search functionality
