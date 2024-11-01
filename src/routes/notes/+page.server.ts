@@ -2,11 +2,13 @@
 import { NotesHandler } from '$lib/server/notes';
 import type { Actions } from './$types';
 
+const initItemsPerPage = 5;
+
 // Optional: If you need to load any data for the page
 export const load = async ({ url }) => {
 	const notesHandler = new NotesHandler();
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
-	const itemsPerPage = parseInt(url.searchParams.get('itemsPerPage') || '5', 10);
+	const itemsPerPage = parseInt(url.searchParams.get('itemsPerPage') || initItemsPerPage.toString(), 10);
 	const allNotes = notesHandler.getAllNotes();
 	const totalNotes = allNotes.length;
 	const totalPages = totalNotes > 0 ? Math.ceil(totalNotes / itemsPerPage) : 1; // Adjusted to handle zero notes

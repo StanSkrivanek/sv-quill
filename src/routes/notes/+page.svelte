@@ -5,13 +5,11 @@
 	interface Props {
 		data: PageData;
 	}
-
+	const initItemsPerPage = 5;
 	let { data }: Props = $props();
-	console.log("🚀 ~ data:", data);
-
 	// Initialize state variables using $state()
-	let currentPage = $state(data.currentPage ?? 1);
-	let itemsPerPage = $state(data.itemsPerPage ?? 5);
+	let currentPage = $state(data.currentPage);
+	let itemsPerPage = $state(data.itemsPerPage || initItemsPerPage.toString());
 
 	function formatDate(dateString: string) {
 		return new Date(dateString).toLocaleString();
@@ -32,7 +30,7 @@
 	}
 
 	function changeItemsPerPage(event: Event) {
-		itemsPerPage = parseInt((event.target as HTMLSelectElement).value);
+		itemsPerPage = (event.target as HTMLSelectElement).value;
 		currentPage = 1; // Reset to first page when items per page changes
 		goto(`/notes?page=1&itemsPerPage=${itemsPerPage}`);
 	}
@@ -65,21 +63,34 @@
 	</div>
 
 	<div class="mb-4 flex items-center justify-between">
-			<div class="flex items-center gap-2">
+		<div class="flex items-center gap-2">
 			<label for="itemsPerPage" class="text-gray-700">Items per page:</label>
-			<select id="itemsPerPage" bind:value={itemsPerPage} onchange={changeItemsPerPage} class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+			<select
+				id="itemsPerPage"
+				value={initItemsPerPage.toString() ?? itemsPerPage }			
+				onchange={changeItemsPerPage}
+				class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+			>
 				<option value="3">3</option>
 				<option value="5">5</option>
 				<option value="10">10</option>
 				<option value="25">25</option>
 			</select>
 		</div>
-			<div class="flex items-center gap-2">
-			<button onclick={() => changePage(currentPage - 1)} disabled={currentPage === 1} class="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50">
+		<div class="flex items-center gap-2">
+			<button
+				onclick={() => changePage(currentPage - 1)}
+				disabled={currentPage === 1}
+				class="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+			>
 				Previous
 			</button>
-			<span class="text-gray-700">Page {currentPage}</span>
-			<button onclick={() => changePage(currentPage + 1)} disabled={currentPage === data.totalPages} class="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50">
+			<span class="text-gray-700">Page {currentPage} of {data.totalPages}</span>
+			<button
+				onclick={() => changePage(currentPage + 1)}
+				disabled={currentPage === data.totalPages}
+				class="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+			>
 				Next
 			</button>
 		</div>
