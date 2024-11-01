@@ -9,6 +9,8 @@ npm install
 npm run dev
 ```
 
+SQLite database will be created in the `data` folder of the project root automatically.
+
 ## Features
 
 - Create, Edit and Delete notes
