@@ -14,6 +14,10 @@ npm install
 
 2. Create empty folder `data` in the project root.
 
+```bash
+mkdir data
+```
+
 3. Run dev server
 
 ```bash
