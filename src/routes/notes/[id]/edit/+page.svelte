@@ -223,7 +223,7 @@
 				noteContent={editorContent.html}
 				title={editorContent.title}
 				placeholder="Start writing your note..."
-				on:change={handleContentChange}
+				onChange={(details) => handleContentChange(new CustomEvent('change', { detail: details }))}
 			/>
 		</div>
 	{/if}

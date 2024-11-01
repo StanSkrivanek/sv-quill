@@ -7,13 +7,14 @@
 		title: '' as string,
 		html: '' as string,
 		text: '' as string
-	});// Add title variable
+	});
+	
 	let isSaving = $state(false);
 	let saveStatus: 'idle' | 'saving' | 'error' = $state('idle');
 	let errorMessage = $state('');
 
-	function handleContentChange(event: CustomEvent<{ title: string; html: string; text: string }>) {
-		const { title, html, text } = event.detail;
+	function handleContentChange(details: { title: string; html: string; text: string }) {
+		const { title, html, text } = details;
 		editorContent = { title, html, text };
 	}
 
@@ -142,7 +143,7 @@
 			<RichTextEditor
 				noteContent={editorContent.html}
 				placeholder="Start writing your note..."
-				on:change={handleContentChange}
+				onChange={handleContentChange}
 			/>
 		</div>
 	{/if}

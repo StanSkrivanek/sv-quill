@@ -2,7 +2,8 @@
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	// Event dispatcher for changes
-	import { createEventDispatcher } from 'svelte';
+	// import { createEventDispatcher } from 'svelte';
+	// import { on } from 'svelte/events';
 
 	// Props
 
@@ -12,6 +13,8 @@
 		placeholder?: string;
 		readonly?: boolean;
 		height?: string;
+		// onchange?: (event: CustomEvent<{ title?: string; html: string; text: string }>) => void;
+		onChange?: (details: { title: string, html: string, text: string, }) => void;
 	}
 
 	let {
@@ -19,9 +22,10 @@
 		title = '',
 		placeholder = 'Start writing your note...',
 		readonly = false,
-		height = '400px'
+		height = '400px',
+		onChange = () => undefined // Default onchange handler
 	}: Props = $props();
-	const dispatch = createEventDispatcher();
+	// const dispatch = createEventDispatcher();
 
 	// Editor references
 	let Quill: any;
@@ -213,10 +217,12 @@
 					]
 				});
 
-				dispatch('change', {
+				// dispatch('change', {
+				onChange({
 					title,
 					html: sanitizedContent,
 					text: quill.getText()
+
 				});
 			});
 
@@ -238,7 +244,8 @@
 			bind:value={title}
 			placeholder="Enter note title"
 			oninput={() =>
-				dispatch('change', { title, html: quill.root.innerHTML, text: quill.getText() })}
+				// dispatch('change', { title, html: quill.root.innerHTML, text: quill.getText() })}
+				onChange({ title, html: quill.root.innerHTML, text: quill.getText() })}
 		/>
 		<div bind:this={editorElement}></div>
 	</div>
