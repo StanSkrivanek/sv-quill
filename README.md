@@ -1,6 +1,6 @@
 # Simple Notes
 
-This small App use Svelte 5 and Quill to store notes in SQLite database.
+A simple note app demo using Svelte 5 and Quill to store notes in SQLite database.
 
 ## Installation
 
@@ -12,8 +12,11 @@ npm run dev
 ## Features
 
 - Create, Edit and Delete notes
+- limit on image size to 200kb width and height
 - saving images in db together with HTML content as base64.
+- saving notes in SQLite database
+- simple pagination
 
 ## TODO
 
-- add pagination to note list with option how many notes to show per page (5, 10, 20, 50)
+- [ ] Add search functionality
