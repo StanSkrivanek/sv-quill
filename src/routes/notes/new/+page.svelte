@@ -4,11 +4,10 @@
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 
 	let editorContent = $state({
-		title: '',
-		html: '',
-		text: ''
-	});
-
+		title: '' as string,
+		html: '' as string,
+		text: '' as string
+	});// Add title variable
 	let isSaving = $state(false);
 	let saveStatus: 'idle' | 'saving' | 'error' = $state('idle');
 	let errorMessage = $state('');
@@ -135,8 +134,10 @@
 			</button>
 		</div>
 	</div>
-
+	<!-- Title input field -->
 	{#if browser}
+	<div class="mb-4">
+	</div>
 		<div class="overflow-hidden rounded-lg bg-white shadow-lg">
 			<RichTextEditor
 				noteContent={editorContent.html}

@@ -20,9 +20,10 @@ export const actions = {
 			const id = formData.get('id')?.toString() || '';
 			const html = formData.get('html')?.toString() || '';
 			const text = formData.get('text')?.toString() || '';
+			const title = formData.get('title')?.toString() || '';
 
 			const notesHandler = new NotesHandler();
-			const success = notesHandler.updateNote(parseInt(id), { html, text });
+			const success = notesHandler.updateNote(parseInt(id), { title, html, text });
 
 			return {
 				success
@@ -38,7 +39,7 @@ export const actions = {
 	delete: async ({ request }) => {
 		try {
 			const id = (await request.formData()).get('id')?.toString();
-			console.log("🚀 ~ DELETE: ~ id:", id)
+			// console.log('🚀 ~ DELETE: ~ id:', id);
 			if (!id) throw new Error('Invalid ID');
 
 			const success = new NotesHandler().deleteNote(parseInt(id));

@@ -7,6 +7,7 @@
 	}
 
 	let { data }: Props = $props();
+	console.log("🚀 ~ data:", data)
 	let isDeleting = $state(false);
 	let showModal = $state(false);
 	let modalMessage = $state('');
@@ -123,6 +124,7 @@
 	<div class="overflow-hidden rounded-lg bg-white shadow-lg">
 		<div class="p-6">
 			<article class="prose prose-lg max-w-none">
+				<h1>{data.note.title}</h1>
 				{@html data.note.html}
 			</article>
 		</div>

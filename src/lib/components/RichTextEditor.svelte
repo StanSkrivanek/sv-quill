@@ -8,6 +8,7 @@
 
 	interface Props {
 		noteContent?: string;
+		title?: string;
 		placeholder?: string;
 		readonly?: boolean;
 		height?: string;
@@ -15,6 +16,7 @@
 
 	let {
 		noteContent = '',
+		title = '',
 		placeholder = 'Start writing your note...',
 		readonly = false,
 		height = '400px'
@@ -27,7 +29,6 @@
 	let quill: any;
 	let editorElement = $state();
 	let isEditorReady = false;
-	let title = $state('');
 
 	// Quill configuration
 	const toolbarOptions = [
@@ -232,7 +233,13 @@
 
 {#if browser}
 	<div class="rich-text-editor" style="height: {height}">
-		<input type="text" bind:value={title} placeholder="Enter note title" />
+		<input
+			type="text"
+			bind:value={title}
+			placeholder="Enter note title"
+			oninput={() =>
+				dispatch('change', { title, html: quill.root.innerHTML, text: quill.getText() })}
+		/>
 		<div bind:this={editorElement}></div>
 	</div>
 {/if}
@@ -254,8 +261,6 @@
 	.rich-text-editor :global(.ql-toolbar) {
 		border-bottom: 1px solid #ccc;
 		background-color: #f8f8f8;
-		/* position: sticky;
-		top: 0; */
 		z-index: 1;
 	}
 
@@ -277,7 +282,7 @@
 	}
 
 	/* Style for the title input */
-	.rich-text-editor input[type="text"] {
+	.rich-text-editor input[type='text'] {
 		width: 100%;
 		padding: 0.5rem;
 		border: 1px solid #ccc;

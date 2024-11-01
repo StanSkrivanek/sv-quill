@@ -11,6 +11,7 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	const notesHandler = new NotesHandler();
 	const note = notesHandler.getNote(noteId);
+	console.log("🚀 ~ constload:PageServerLoad= ~ note:", note)
 
 	if (!note) {
 		throw error(404, 'Note not found');

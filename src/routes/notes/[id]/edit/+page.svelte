@@ -14,6 +14,7 @@
 	// 	return new Date(dateString).toLocaleString();
 	// }
 	let editorContent = $state({
+		title: data.note.title,
 		html: data.note.html,
 		text: data.note.text
 	});
@@ -27,9 +28,9 @@
 	let modalMessage = $state('');
 	let modalAction: (() => void) | null = null;
 
-	function handleContentChange(event: CustomEvent<{ html: string; text: string }>) {
-		const { html, text } = event.detail;
-		editorContent = { html, text };
+	function handleContentChange(event: CustomEvent<{ title: string; html: string; text: string }>) {
+		const { title, html, text } = event.detail;
+		editorContent = { title, html, text };
 	}
 
 	async function handleSave() {
@@ -50,6 +51,8 @@
 				} else {
 					throw new Error('Note ID is missing');
 				}
+
+				formData.append('title', editorContent.title);
 				formData.append('html', editorContent.html);
 				formData.append('text', editorContent.text);
 
@@ -217,7 +220,8 @@
 	{#if browser}
 		<div class="overflow-hidden rounded-lg bg-white shadow-lg">
 			<RichTextEditor
-				value={editorContent.html}
+				noteContent={editorContent.html}
+				title={editorContent.title}
 				placeholder="Start writing your note..."
 				on:change={handleContentChange}
 			/>
