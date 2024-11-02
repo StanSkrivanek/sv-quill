@@ -8,7 +8,7 @@
 		html: '' as string,
 		text: '' as string
 	});
-	
+
 	let isSaving = $state(false);
 	let saveStatus: 'idle' | 'saving' | 'error' = $state('idle');
 	let errorMessage = $state('');
@@ -28,7 +28,7 @@
 			errorMessage = 'Content cannot be empty';
 			saveStatus = 'error';
 			return;
-			}
+		}
 
 		if (browser) {
 			try {
@@ -49,9 +49,8 @@
 					throw new Error('Failed to save note');
 				}
 
-				 // Redirect to the list of notes
+				// Redirect to the list of notes
 				goto('/notes');
-
 			} catch (error) {
 				console.error('Error saving note:', error);
 				saveStatus = 'error';
@@ -69,7 +68,11 @@
 
 <svelte:head>
 	{#if browser}
-		<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+		<link
+			href="https://cdn.quilljs.com/1.3.7/quill.snow.css"
+			rel="stylesheet"
+			crossorigin="anonymous"
+		/>
 	{/if}
 </svelte:head>
 
@@ -135,10 +138,8 @@
 			</button>
 		</div>
 	</div>
-	<!-- Title input field -->
+
 	{#if browser}
-	<div class="mb-4">
-	</div>
 		<div class="overflow-hidden rounded-lg bg-white shadow-lg">
 			<RichTextEditor
 				noteContent={editorContent.html}

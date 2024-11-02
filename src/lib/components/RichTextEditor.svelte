@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onDestroy, onMount } from 'svelte';
 
 	interface Props {
 		noteContent?: string;
@@ -8,7 +7,7 @@
 		placeholder?: string;
 		readonly?: boolean;
 		height?: string;
-		onChange?: (details: { title: string, html: string, text: string, }) => void;
+		onChange?: (details: { title: string; html: string; text: string }) => void;
 	}
 
 	let {
@@ -29,10 +28,10 @@
 	const toolbarOptions = [
 		[{ font: [] }],
 		[{ header: [1, 2, 3, 4, 5, 6, false] }],
-			['bold', 'italic', 'underline', 'strike'],
+		['bold', 'italic', 'underline', 'strike'],
 		[{ list: 'ordered' }, { list: 'bullet' }],
 		['blockquote', 'code-block'],
-			[{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }],
+		[{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }],
 		[{ color: [] }, { background: [] }],
 		[{ script: 'sub' }, { script: 'super' }],
 		[{ indent: '-1' }, { indent: '+1' }],
@@ -117,102 +116,114 @@
 		}, 6000);
 	}
 
-	onMount(async () => {
-		if (browser) {
-			const [quillModule, domPurifyModule] = await Promise.all([
-				import('quill'),
-				import('dompurify')
-			]);
-			Quill = quillModule.default;
-			DOMPurify = domPurifyModule.default;
+	$effect(() => {
+		if (!browser || isEditorReady) return;
 
-			quill = new Quill(editorElement, {
-				modules: {
-					toolbar: {
-						container: toolbarOptions,
-						handlers: {
-							image: imageHandler
-						}
-					}
-				},
-				placeholder,
-				readOnly: readonly,
-				theme: 'snow'
-			});
+		let mounted = true;
 
-			if (noteContent) {
-				quill.root.innerHTML = DOMPurify.sanitize(noteContent);
+		async function initializeQuill() {
+			try {
+				const [quillModule, domPurifyModule] = await Promise.all([
+					import('quill'),
+					import('dompurify')
+				]);
+
+				if (!mounted) return;
+
+				Quill = quillModule.default;
+				DOMPurify = domPurifyModule.default;
+
+				quill = new Quill(editorElement, {
+					modules: {
+						toolbar: toolbarOptions
+					},
+					theme: 'snow',
+					placeholder,
+					readOnly: readonly
+				});
+
+				// Safely set initial content
+				if (noteContent) {
+					quill.root.innerHTML = DOMPurify.sanitize(noteContent, {
+						ALLOWED_TAGS: [
+							'p',
+							'br',
+							'strong',
+							'em',
+							'u',
+							's',
+							'h1',
+							'h2',
+							'h3',
+							'h4',
+							'h5',
+							'h6',
+							'ol',
+							'ul',
+							'li',
+							'blockquote',
+							'pre',
+							'code',
+							'a',
+							'img',
+							'video',
+							'span',
+							'sub',
+							'super',
+							'div'
+						],
+						ALLOWED_ATTR: [
+							'href',
+							'src',
+							'alt',
+							'class',
+							'style',
+							'target',
+							'controls',
+							'width',
+							'height'
+						],
+						ALLOWED_STYLES: [
+							'color',
+							'background-color',
+							'text-align',
+							'font-size',
+							'font-family',
+							'margin',
+							'margin-left',
+							'padding'
+						]
+					});
+					//  const cleanHtml = DOMPurify.sanitize(noteContent);
+					//  const delta = quill.clipboard.convert(cleanHtml);
+					//  quill.setContents(delta);
+				}
+
+				isEditorReady = true;
+
+				quill.on('text-change', () => {
+					const html = quill.root.innerHTML;
+					const cleanHtml = DOMPurify.sanitize(html);
+					// const delta = quill.clipboard.convert(cleanHtml);
+					// quill.setContents(delta);
+					const text = quill.getText();
+					onChange({ title, html: cleanHtml, text });
+				});
+			} catch (error) {
+				console.error('Failed to initialize Quill:', error);
 			}
-
-			quill.on('text-change', () => {
-				const content = quill.root.innerHTML;
-
-				const sanitizedContent = DOMPurify.sanitize(content, {
-					ALLOWED_TAGS: [
-						'p',
-						'br',
-						'strong',
-						'em',
-						'u',
-						's',
-						'h1',
-						'h2',
-						'h3',
-						'h4',
-						'h5',
-						'h6',
-						'ol',
-						'ul',
-						'li',
-						'blockquote',
-						'pre',
-						'code',
-						'a',
-						'img',
-						'video',
-						'span',
-						'sub',
-						'super',
-						'div'
-					],
-					ALLOWED_ATTR: [
-						'href',
-						'src',
-						'alt',
-						'class',
-						'style',
-						'target',
-						'controls',
-						'width',
-						'height'
-					],
-					ALLOWED_STYLES: [
-						'color',
-						'background-color',
-						'text-align',
-						'font-size',
-						'font-family',
-						'margin',
-						'margin-left',
-						'padding'
-					]
-				});
-
-				onChange({
-					title,
-					html: sanitizedContent,
-					text: quill.getText()
-				});
-			});
-
-			isEditorReady = true;
 		}
-	});
 
-	onDestroy(() => {
-		if (quill) {
-			quill = null;
-		}
+		initializeQuill();
+
+		// Cleanup function
+		return () => {
+			mounted = false;
+			if (quill) {
+				quill.off('text-change');
+				quill = null;
+			}
+		};
 	});
 </script>
 
@@ -222,8 +233,7 @@
 			type="text"
 			bind:value={title}
 			placeholder="Enter note title"
-			oninput={() =>
-				onChange({ title, html: quill.root.innerHTML, text: quill.getText() })}
+			oninput={() => onChange({ title, html: quill.root.innerHTML, text: quill.getText() })}
 		/>
 		<div bind:this={editorElement}></div>
 	</div>
