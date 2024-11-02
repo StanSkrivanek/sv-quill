@@ -40,7 +40,47 @@
 		['link', 'image', 'video'],
 		['clean']
 	];
-
+	
+	const allowedOptions = {
+		ALLOWED_TAGS: [
+			'p',
+			'br',
+			'strong',
+			'em',
+			'u',
+			's',
+			'h1',
+			'h2',
+			'h3',
+			'h4',
+			'h5',
+			'h6',
+			'ol',
+			'ul',
+			'li',
+			'blockquote',
+			'pre',
+			'code',
+			'a',
+			'img',
+			'video',
+			'span',
+			'sub',
+			'super',
+			'div'
+		],
+		ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'controls', 'width', 'height'],
+		ALLOWED_STYLES: [
+			'color',
+			'background-color',
+			'text-align',
+			'font-size',
+			'font-family',
+			'margin',
+			'margin-left',
+			'padding'
+		]
+	};
 	async function convertToBase64(file: File): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const reader = new FileReader();
@@ -144,56 +184,7 @@
 
 				// Safely set initial content
 				if (noteContent) {
-					quill.root.innerHTML = DOMPurify.sanitize(noteContent, {
-						ALLOWED_TAGS: [
-							'p',
-							'br',
-							'strong',
-							'em',
-							'u',
-							's',
-							'h1',
-							'h2',
-							'h3',
-							'h4',
-							'h5',
-							'h6',
-							'ol',
-							'ul',
-							'li',
-							'blockquote',
-							'pre',
-							'code',
-							'a',
-							'img',
-							'video',
-							'span',
-							'sub',
-							'super',
-							'div'
-						],
-						ALLOWED_ATTR: [
-							'href',
-							'src',
-							'alt',
-							'class',
-							'style',
-							'target',
-							'controls',
-							'width',
-							'height'
-						],
-						ALLOWED_STYLES: [
-							'color',
-							'background-color',
-							'text-align',
-							'font-size',
-							'font-family',
-							'margin',
-							'margin-left',
-							'padding'
-						]
-					});
+					quill.root.innerHTML = DOMPurify.sanitize(noteContent, allowedOptions);
 					//  const cleanHtml = DOMPurify.sanitize(noteContent);
 					//  const delta = quill.clipboard.convert(cleanHtml);
 					//  quill.setContents(delta);
@@ -203,7 +194,7 @@
 
 				quill.on('text-change', () => {
 					const html = quill.root.innerHTML;
-					const cleanHtml = DOMPurify.sanitize(html);
+					const cleanHtml = DOMPurify.sanitize(html, allowedOptions);
 					// const delta = quill.clipboard.convert(cleanHtml);
 					// quill.setContents(delta);
 					const text = quill.getText();
