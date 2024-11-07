@@ -1,16 +1,7 @@
-<!-- This version works but doesn't delete old toolbar -->
-
 <script lang="ts">
 	import { browser } from '$app/environment';
-
-	interface Props {
-		noteContent?: string;
-		title?: string;
-		placeholder?: string;
-		readonly?: boolean;
-		height?: string;
-		onChange?: (details: { title: string; html: string; text: string }) => void;
-	}
+	import { ALLOWED_OPTIONS } from './config';
+	import type { Props, ToolsState } from './types';
 
 	let {
 		noteContent = '',
@@ -34,39 +25,8 @@
 
 	// ---------------------- QUILL Toolbar CONFIGURATION ----------------------
 
-	// toolbar tools types
-	interface ToolConfigType {
-		visible: boolean;
-		label: string;
-	}
-
-	type ToolKey =
-		| 'font'
-		| 'header'
-		| 'bold'
-		| 'italic'
-		| 'underline'
-		| 'strike'
-		| 'list'
-		| 'blockquote'
-		| 'codeBlock'
-		| 'color'
-		| 'background'
-		| 'script'
-		| 'indent'
-		| 'direction'
-		| 'align'
-		| 'link'
-		| 'image'
-		| 'video'
-		| 'clean';
-
-	type ToolsState = {
-		[K in ToolKey]: ToolConfigType;
-	};
-
 	// Create state for tools
-	const toolState = $state.raw<ToolsState>({
+	const toolState = $state<ToolsState>({
 		font: { visible: true, label: 'Font' },
 		header: { visible: true, label: 'Headers' },
 		bold: { visible: true, label: 'Bold' },
@@ -87,12 +47,11 @@
 		video: { visible: true, label: 'Video' },
 		clean: { visible: true, label: 'Clear Formatting' }
 	});
-	$inspect('🚀 ~ toolState:', toolState);
+	// $inspect('🚀 ~ toolState:', toolState);
 
 	// Create derived state for toolbar options
 	const toolbarTools = $derived(() => {
-		return [
-			[{ settings: 'Settings' }], // Add settings button
+		const tools = [
 			[{ font: toolState.font.visible ? [] : false }],
 			[{ header: toolState.header.visible ? [1, 2, 3, 4, 5, 6, false] : [] }],
 			[
@@ -121,6 +80,8 @@
 			],
 			...(toolState.clean.visible ? [['clean']] : [])
 		].filter((group) => group.length > 0);
+
+		return [...tools, [{ settings: 'Settings' }]];
 	});
 
 	// Update tools when toolState changes
@@ -129,63 +90,7 @@
 		tools = toolbarTools();
 		$inspect('🚀 ~ TOOLS:', tools);
 	});
-	// $inspect('TOOLS', tools);
-	// const toolbarTools = $state([
-	// 	[{ font: [] }],
-	// 	[{ header: [1, 2, 3, 4, 5, 6, false] }],
-	// 	['bold', 'italic', 'underline', 'strike'],
-	// 	[{ list: 'ordered' }, { list: 'bullet' }],
-	// 	['blockquote', 'code-block'],
-	// 	[{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }],
-	// 	[{ color: [] }, { background: [] }],
-	// 	[{ script: 'sub' }, { script: 'super' }],
-	// 	[{ indent: '-1' }, { indent: '+1' }],
-	// 	[{ direction: 'rtl' }],
-	// 	[{ align: [] }],
-	// 	['link', 'image', 'video'],
-	// 	['clean']
-	// ]);
 
-	const allowedOptions = {
-		ALLOWED_TAGS: [
-			'p',
-			'br',
-			'strong',
-			'em',
-			'u',
-			's',
-			'h1',
-			'h2',
-			'h3',
-			'h4',
-			'h5',
-			'h6',
-			'ol',
-			'ul',
-			'li',
-			'blockquote',
-			'pre',
-			'code',
-			'a',
-			'img',
-			'video',
-			'span',
-			'sub',
-			'super',
-			'div'
-		],
-		ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'controls', 'width', 'height'],
-		ALLOWED_STYLES: [
-			'color',
-			'background-color',
-			'text-align',
-			'font-size',
-			'font-family',
-			'margin',
-			'margin-left',
-			'padding'
-		]
-	};
 	// ---------------------- IMAGE HANDLER ----------------------
 	async function convertToBase64(file: File): Promise<string> {
 		return new Promise((resolve, reject) => {
@@ -262,7 +167,6 @@
 		}, 6000);
 	}
 
-
 	// Add function to handle Quill initialization
 	async function initializeQuill() {
 		try {
@@ -317,7 +221,7 @@
 			// Restore content after a brief delay to ensure proper initialization
 			setTimeout(() => {
 				if (currentContent && quill) {
-					quill.root.innerHTML = DOMPurify.sanitize(currentContent, allowedOptions);
+					quill.root.innerHTML = DOMPurify.sanitize(currentContent, ALLOWED_OPTIONS);
 				}
 			}, 0);
 
@@ -325,7 +229,7 @@
 
 			quill.on('text-change', () => {
 				const html = quill.root.innerHTML;
-				const cleanHtml = DOMPurify.sanitize(html, allowedOptions);
+				const cleanHtml = DOMPurify.sanitize(html, ALLOWED_OPTIONS);
 				const text = quill.getText();
 				onChange({ title, html: cleanHtml, text });
 			});
@@ -362,98 +266,96 @@
 		};
 	});
 
-  function reinitializeQuill() {
-    if (!quill || !Quill || !DOMPurify || !editorElement) return;
+	function reinitializeQuill() {
+		if (!quill || !Quill || !DOMPurify || !editorElement) return;
 
-    // Save current content and selection
-    const content = quill.getContents();
-    const selection = quill.getSelection();
+		// Save current content and selection
+		const content = quill.getContents();
+		const selection = quill.getSelection();
 
-    // Remove old instance and clean up
-    const oldContainer = quill.container;
-    quill.off('text-change');
-    oldContainer.innerHTML = '';
+		// Clean up old instance
+		quill.off('text-change');
 
-    // Create container structure
-    const toolbarContainer = document.createElement('div');
-    toolbarContainer.id = 'toolbar-container';
-    const editorContainer = document.createElement('div');
-    editorContainer.id = 'editor-container';
-    
-    oldContainer.appendChild(toolbarContainer);
-    oldContainer.appendChild(editorContainer);
+		// Remove existing toolbar if any
+		const oldToolbar = document.querySelector('.ql-toolbar');
+		if (oldToolbar) {
+			oldToolbar.remove();
+		}
 
-    // Get current toolbar configuration
-    const currentTools = generateToolbarOptions();
+		// Reset editor element
+		editorElement.innerHTML = '';
 
-    // Initialize new Quill instance with current tools
-    quill = new Quill(editorContainer, {
-      modules: {
-        toolbar: {
-          container: currentTools
-        }
-      },
-      theme: 'snow',
-      placeholder,
-      readOnly: readonly
-    });
+		// Initialize new Quill instance with proper structure
+		quill = new Quill(editorElement, {
+			modules: {
+				toolbar: {
+					container: [...generateToolbarOptions(), [{ settings: 'Settings' }]],
+					handlers: {
+						settings: toggleSettings,
+						image: imageHandler
+					}
+				}
+			},
+			theme: 'snow',
+			placeholder,
+			readOnly: readonly
+		});
 
-    // Restore content and selection
-    quill.setContents(content);
-    if (selection) {
-      quill.setSelection(selection);
-    }
+		// Restore content and selection
+		quill.setContents(content);
+		if (selection) {
+			quill.setSelection(selection);
+		}
 
-    // Reattach event handlers
-    quill.on('text-change', () => {
-      const dirtyHtml = quill.root.innerHTML;
-      const cleanHtml = DOMPurify.sanitize(dirtyHtml);
-      const text = quill.getText();
-      onChange({ title, html: cleanHtml, text });
-    });
-  }
+		// Reattach event handlers
+		quill.on('text-change', () => {
+			const dirtyHtml = quill.root.innerHTML;
+			const cleanHtml = DOMPurify.sanitize(dirtyHtml, ALLOWED_OPTIONS);
+			const text = quill.getText();
+			onChange({ title, html: cleanHtml, text });
+		});
+	}
 
-  function generateToolbarOptions() {
-    return [
-      ...(toolState.font.visible ? [[{ font: [] }]] : []),
-      ...(toolState.header.visible ? [[{ header: [1, 2, 3, 4, 5, 6, false] }]] : []),
-      [
-        ...(toolState.bold.visible ? ['bold'] : []),
-        ...(toolState.italic.visible ? ['italic'] : []),
-        ...(toolState.underline.visible ? ['underline'] : []),
-        ...(toolState.strike.visible ? ['strike'] : [])
-      ].filter(tool => tool),
-      ...(toolState.list.visible ? [[{ list: 'ordered' }, { list: 'bullet' }]] : []),
-      [
-        ...(toolState.blockquote.visible ? ['blockquote'] : []),
-        ...(toolState.codeBlock.visible ? ['code-block'] : [])
-      ].filter(tool => tool),
-      [
-        ...(toolState.color.visible ? [{ color: [] }] : []),
-        ...(toolState.background.visible ? [{ background: [] }] : [])
-      ].filter(tool => Object.keys(tool).length),
-      ...(toolState.script.visible ? [[{ script: 'sub' }, { script: 'super' }]] : []),
-      ...(toolState.indent.visible ? [[{ indent: '-1' }, { indent: '+1' }]] : []),
-      ...(toolState.direction.visible ? [[{ direction: 'rtl' }]] : []),
-      ...(toolState.align.visible ? [[{ align: [] }]] : []),
-      [
-        ...(toolState.link.visible ? ['link'] : []),
-        ...(toolState.image.visible ? ['image'] : []),
-        ...(toolState.video.visible ? ['video'] : [])
-      ].filter(tool => tool),
-      ...(toolState.clean.visible ? [['clean']] : [])
-    ].filter(group => Array.isArray(group) && group.length > 0);
-  }
+	function generateToolbarOptions() {
+		return [
+			...(toolState.font.visible ? [[{ font: [] }]] : []),
+			...(toolState.header.visible ? [[{ header: [1, 2, 3, 4, 5, 6, false] }]] : []),
+			[
+				...(toolState.bold.visible ? ['bold'] : []),
+				...(toolState.italic.visible ? ['italic'] : []),
+				...(toolState.underline.visible ? ['underline'] : []),
+				...(toolState.strike.visible ? ['strike'] : [])
+			].filter((tool) => tool),
+			...(toolState.list.visible ? [[{ list: 'ordered' }, { list: 'bullet' }]] : []),
+			[
+				...(toolState.blockquote.visible ? ['blockquote'] : []),
+				...(toolState.codeBlock.visible ? ['code-block'] : [])
+			].filter((tool) => tool),
+			[
+				...(toolState.color.visible ? [{ color: [] }] : []),
+				...(toolState.background.visible ? [{ background: [] }] : [])
+			].filter((tool) => Object.keys(tool).length),
+			...(toolState.script.visible ? [[{ script: 'sub' }, { script: 'super' }]] : []),
+			...(toolState.indent.visible ? [[{ indent: '-1' }, { indent: '+1' }]] : []),
+			...(toolState.direction.visible ? [[{ direction: 'rtl' }]] : []),
+			...(toolState.align.visible ? [[{ align: [] }]] : []),
+			[
+				...(toolState.link.visible ? ['link'] : []),
+				...(toolState.image.visible ? ['image'] : []),
+				...(toolState.video.visible ? ['video'] : [])
+			].filter((tool) => tool),
+			...(toolState.clean.visible ? [['clean']] : [])
+		].filter((group) => Array.isArray(group) && group.length > 0);
+	}
 
-  function toggleSettings() {
-    isSettingsModalOpen = !isSettingsModalOpen;
-    if (!isSettingsModalOpen) {
-      setTimeout(() => {
-        reinitializeQuill();
-      }, 0);
-    }
-  }
-  
+	function toggleSettings() {
+		isSettingsModalOpen = !isSettingsModalOpen;
+		if (!isSettingsModalOpen) {
+			setTimeout(() => {
+				reinitializeQuill();
+			}, 0);
+		}
+	}
 </script>
 
 {#if browser}
@@ -503,7 +405,10 @@
 	></button>
 	<button
 		class="settings-modal-close"
-		onclick={() =>{toggleSettings(); reinitializeQuill()}}
+		onclick={() => {
+			toggleSettings();
+			reinitializeQuill();
+		}}
 		aria-label="Close settings modal"
 		onkeydown={(e) => e.key === 'Enter' && toggleSettings()}
 	></button>
@@ -608,4 +513,27 @@
 		background-position: center;
 		background-repeat: no-repeat;
 	}
+	.rich-text-editor :global(.ql-toolbar) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.rich-text-editor :global(.ql-toolbar .ql-formats) {
+		display: flex;
+		align-items: center;
+	}
+	.rich-text-editor :global(.ql-toolbar .ql-formats:nth-last-child(2)) {
+		flex: 1;
+	}
+	.rich-text-editor :global(.ql-toolbar .ql-formats:nth-last-child(1)) {
+		margin: 0;
+	}
+
+	/*settings button */
+  .rich-text-editor :global(.ql-toolbar .ql-settings) {
+    border-left: 1px solid #ccc;
+    padding-left: 20px;
+  }
 </style>
