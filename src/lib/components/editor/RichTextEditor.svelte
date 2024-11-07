@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { ALLOWED_OPTIONS } from './config';
-	import type { Props, ToolsState } from './types';
+	import type { Props, ToolKey, ToolsState } from './types';
 
 	let {
 		noteContent = '',
@@ -19,14 +19,16 @@
 	let isEditorReady = false;
 	let isSettingsModalOpen = $state(false);
 	let mounted = $state(false);
+	// Storage utilities
+	const STORAGE_KEY = 'quill-toolbar-settings';
+	const storedToolState = loadToolbarSettings();
 	// $inspect('🚀 ~ isSettingsModalOpen:', isSettingsModalOpen);
 
 	let tools: any[] = [];
-
 	// ---------------------- QUILL Toolbar CONFIGURATION ----------------------
 
 	// Create state for tools
-	const toolState = $state<ToolsState>({
+	const defaultToolState = $state<ToolsState>({
 		font: { visible: true, label: 'Font' },
 		header: { visible: true, label: 'Headers' },
 		bold: { visible: true, label: 'Bold' },
@@ -47,8 +49,11 @@
 		video: { visible: true, label: 'Video' },
 		clean: { visible: true, label: 'Clear Formatting' }
 	});
-	// $inspect('🚀 ~ toolState:', toolState);
-
+	// Create derived state for tool settings
+	const toolState = $state<ToolsState>({
+		...defaultToolState,
+		...storedToolState
+	});
 	// Create derived state for toolbar options
 	const toolbarTools = $derived(() => {
 		const tools = [
@@ -84,12 +89,226 @@
 		return [...tools, [{ settings: 'Settings' }]];
 	});
 
-	// Update tools when toolState changes
+	// Function to toggle tool visibility
+	function toggleToolVisibility(key: keyof ToolsState) {
+		toolState[key].visible = !toolState[key].visible;
+		// Save the updated settings to localStorage
+		saveToolbarSettings(toolState);
+	}
 
+	// Update tools when toolState changes
 	$effect(() => {
 		tools = toolbarTools();
 		$inspect('🚀 ~ TOOLS:', tools);
 	});
+
+	// ---------------------- LOCAL STORE FOR TOOLBAR SETTING STATE ----------------------
+
+	// save toolbar settings to local storage
+	function saveToolbarSettings(settings: ToolsState) {
+		if (browser) {
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+			} catch (e) {
+				console.warn('Failed to save toolbar settings:', e);
+			}
+		}
+	}
+
+	// Load toolbar settings from local storage
+	function loadToolbarSettings(): Partial<ToolsState> {
+		if (browser) {
+			try {
+				const stored = localStorage.getItem(STORAGE_KEY);
+				return stored ? JSON.parse(stored) : {};
+			} catch (e) {
+				console.warn('Failed to load toolbar settings:', e);
+				return {};
+			}
+		}
+		return {};
+	}
+
+	// Add function to handle Quill initialization
+	async function initializeQuill() {
+		try {
+			if (!editorElement) {
+				console.error('Editor element not found');
+				return;
+			}
+
+			const [quillModule, domPurifyModule] = await Promise.all([
+				import('quill'),
+				import('dompurify')
+			]);
+
+			if (!mounted) return;
+
+			Quill = quillModule.default;
+			DOMPurify = domPurifyModule.default;
+
+			// Store current content if quill exists
+			const currentContent = quill?.root?.innerHTML || noteContent;
+
+			// Remove old toolbar and destroy existing instance
+			const oldToolbar = editorElement.previousSibling;
+			if (oldToolbar && (oldToolbar as HTMLElement).className?.includes('ql-toolbar')) {
+				oldToolbar.remove();
+			}
+
+			if (quill) {
+				quill.off('text-change');
+				quill = null;
+			}
+
+			// Clear the editor element
+			editorElement.innerHTML = '';
+
+			// Create new Quill instance
+			quill = new Quill(editorElement, {
+				modules: {
+					toolbar: {
+						container: [
+							...generateToolbarOptions(),
+							[{ settings: 'Settings' }] // Settings button
+						],
+						handlers: {
+							image: imageHandler,
+							settings: toggleSettings
+						}
+					}
+				},
+				placeholder,
+				readOnly: readonly,
+				theme: 'snow'
+			});
+
+			// Restore content after a brief delay to ensure proper initialization
+			setTimeout(() => {
+				if (currentContent && quill) {
+					quill.root.innerHTML = DOMPurify.sanitize(currentContent, ALLOWED_OPTIONS);
+				}
+			}, 0);
+
+			isEditorReady = true;
+
+			quill.on('text-change', () => {
+				const html = quill.root.innerHTML;
+				const cleanHtml = DOMPurify.sanitize(html, ALLOWED_OPTIONS);
+				const text = quill.getText();
+				onChange({ title, html: cleanHtml, text });
+			});
+		} catch (error) {
+			console.error('Failed to initialize Quill:', error);
+			isEditorReady = false;
+			quill = null;
+		}
+	}
+	// Reinitialize Quill when settings change
+	function reinitializeQuill() {
+		if (!quill || !Quill || !DOMPurify || !editorElement) return;
+
+		// Save current content and selection
+		const content = quill.getContents();
+		const selection = quill.getSelection();
+
+		// Clean up old instance
+		quill.off('text-change');
+
+		// Remove existing toolbar if any
+		const oldToolbar = document.querySelector('.ql-toolbar');
+		if (oldToolbar) {
+			oldToolbar.remove();
+		}
+
+		// Reset editor element
+		editorElement.innerHTML = '';
+
+		// Initialize new Quill instance with proper structure
+		initializeQuill();
+
+		// Restore content and selection
+		quill.setContents(content);
+		if (selection) {
+			quill.setSelection(selection);
+		}
+
+		// Reattach event handlers
+		quill.on('text-change', () => {
+			const dirtyHtml = quill.root.innerHTML;
+			const cleanHtml = DOMPurify.sanitize(dirtyHtml, ALLOWED_OPTIONS);
+			const text = quill.getText();
+			onChange({ title, html: cleanHtml, text });
+		});
+	}
+	// Initialize Quill on mount
+	$effect(() => {
+		if (!browser) return;
+
+		mounted = true;
+		let initializationTimer: number;
+
+		if (editorElement && tools.length > 0) {
+			// Delay initialization slightly to ensure DOM is ready
+			initializationTimer = window.setTimeout(() => {
+				initializeQuill();
+			}, 100);
+		}
+
+		return () => {
+			mounted = false;
+			if (initializationTimer) {
+				window.clearTimeout(initializationTimer);
+			}
+			if (quill) {
+				quill.off('text-change');
+				quill = null;
+			}
+		};
+	});
+
+	// Function to generate toolbar options
+	function generateToolbarOptions() {
+		return [
+			...(toolState.font.visible ? [[{ font: [] }]] : []),
+			...(toolState.header.visible ? [[{ header: [1, 2, 3, 4, 5, 6, false] }]] : []),
+			[
+				...(toolState.bold.visible ? ['bold'] : []),
+				...(toolState.italic.visible ? ['italic'] : []),
+				...(toolState.underline.visible ? ['underline'] : []),
+				...(toolState.strike.visible ? ['strike'] : [])
+			].filter((tool) => tool),
+			...(toolState.list.visible ? [[{ list: 'ordered' }, { list: 'bullet' }]] : []),
+			[
+				...(toolState.blockquote.visible ? ['blockquote'] : []),
+				...(toolState.codeBlock.visible ? ['code-block'] : [])
+			].filter((tool) => tool),
+			[
+				...(toolState.color.visible ? [{ color: [] }] : []),
+				...(toolState.background.visible ? [{ background: [] }] : [])
+			].filter((tool) => Object.keys(tool).length),
+			...(toolState.script.visible ? [[{ script: 'sub' }, { script: 'super' }]] : []),
+			...(toolState.indent.visible ? [[{ indent: '-1' }, { indent: '+1' }]] : []),
+			...(toolState.direction.visible ? [[{ direction: 'rtl' }]] : []),
+			...(toolState.align.visible ? [[{ align: [] }]] : []),
+			[
+				...(toolState.link.visible ? ['link'] : []),
+				...(toolState.image.visible ? ['image'] : []),
+				...(toolState.video.visible ? ['video'] : [])
+			].filter((tool) => tool),
+			...(toolState.clean.visible ? [['clean']] : [])
+		].filter((group) => Array.isArray(group) && group.length > 0);
+	}
+
+	//  Run reinitializeQuill() on dialog Close
+	function toggleSettings() {
+		isSettingsModalOpen = !isSettingsModalOpen;
+		if (!isSettingsModalOpen) {
+			setTimeout(() => {
+				reinitializeQuill();
+			}, 0);
+		}
+	}
 
 	// ---------------------- IMAGE HANDLER ----------------------
 	async function convertToBase64(file: File): Promise<string> {
@@ -141,6 +360,7 @@
 		quill.insertEmbed(range.index, 'image', imageUrl);
 	}
 
+	// ---------------------- POPUP HANDLER ----------------------
 	function showPopup(message: string) {
 		const popup = document.createElement('div');
 		popup.className =
@@ -165,197 +385,6 @@
 		setTimeout(() => {
 			popup.remove();
 		}, 6000);
-	}
-
-	// Add function to handle Quill initialization
-	async function initializeQuill() {
-		try {
-			
-			if (!editorElement) {
-				console.error('Editor element not found');
-				return;
-			}
-
-			const [quillModule, domPurifyModule] = await Promise.all([
-				import('quill'),
-				import('dompurify')
-			]);
-
-			if (!mounted) return;
-
-			Quill = quillModule.default;
-			DOMPurify = domPurifyModule.default;
-
-			// Store current content if quill exists
-			const currentContent = quill?.root?.innerHTML || noteContent;
-
-			// Remove old toolbar and destroy existing instance
-			const oldToolbar = editorElement.previousSibling;
-			if (oldToolbar && (oldToolbar as HTMLElement).className?.includes('ql-toolbar')) {
-				oldToolbar.remove();
-			}
-
-			if (quill) {
-				quill.off('text-change');
-				quill = null;
-			}
-
-			// Clear the editor element
-			editorElement.innerHTML = '';
-
-			// Create new Quill instance
-			quill = new Quill(editorElement, {
-				modules: {
-					toolbar: {
-						container: tools,
-						handlers: {
-							image: imageHandler,
-							settings: toggleSettings
-						}
-					}
-				},
-				placeholder,
-				readOnly: readonly,
-				theme: 'snow'
-			});
-
-			// Restore content after a brief delay to ensure proper initialization
-			setTimeout(() => {
-				if (currentContent && quill) {
-					quill.root.innerHTML = DOMPurify.sanitize(currentContent, ALLOWED_OPTIONS);
-				}
-			}, 0);
-
-			isEditorReady = true;
-
-			quill.on('text-change', () => {
-				const html = quill.root.innerHTML;
-				const cleanHtml = DOMPurify.sanitize(html, ALLOWED_OPTIONS);
-				const text = quill.getText();
-				onChange({ title, html: cleanHtml, text });
-			});
-		} catch (error) {
-			console.error('Failed to initialize Quill:', error);
-			isEditorReady = false;
-			quill = null;
-		}
-	}
-
-	// Update the main effect to be more robust
-	$effect(() => {
-		if (!browser) return;
-
-		mounted = true;
-		let initializationTimer: number;
-
-		if (editorElement && tools.length > 0) {
-			// Delay initialization slightly to ensure DOM is ready
-			initializationTimer = window.setTimeout(() => {
-				initializeQuill();
-			}, 100);
-		}
-
-		return () => {
-			mounted = false;
-			if (initializationTimer) {
-				window.clearTimeout(initializationTimer);
-			}
-			if (quill) {
-				quill.off('text-change');
-				quill = null;
-			}
-		};
-	});
-
-	function reinitializeQuill() {
-		if (!quill || !Quill || !DOMPurify || !editorElement) return;
-
-		// Save current content and selection
-		const content = quill.getContents();
-		const selection = quill.getSelection();
-
-		// Clean up old instance
-		quill.off('text-change');
-
-		// Remove existing toolbar if any
-		const oldToolbar = document.querySelector('.ql-toolbar');
-		if (oldToolbar) {
-			oldToolbar.remove();
-		}
-
-		// Reset editor element
-		editorElement.innerHTML = '';
-
-		// Initialize new Quill instance with proper structure
-		quill = new Quill(editorElement, {
-			modules: {
-				toolbar: {
-					container: [...generateToolbarOptions(), [{ settings: 'Settings' }]],
-					handlers: {
-						settings: toggleSettings,
-						image: imageHandler
-					}
-				}
-			},
-			theme: 'snow',
-			placeholder,
-			readOnly: readonly
-		});
-
-		// Restore content and selection
-		quill.setContents(content);
-		if (selection) {
-			quill.setSelection(selection);
-		}
-
-		// Reattach event handlers
-		quill.on('text-change', () => {
-			const dirtyHtml = quill.root.innerHTML;
-			const cleanHtml = DOMPurify.sanitize(dirtyHtml, ALLOWED_OPTIONS);
-			const text = quill.getText();
-			onChange({ title, html: cleanHtml, text });
-		});
-	}
-
-	function generateToolbarOptions() {
-		return [
-			...(toolState.font.visible ? [[{ font: [] }]] : []),
-			...(toolState.header.visible ? [[{ header: [1, 2, 3, 4, 5, 6, false] }]] : []),
-			[
-				...(toolState.bold.visible ? ['bold'] : []),
-				...(toolState.italic.visible ? ['italic'] : []),
-				...(toolState.underline.visible ? ['underline'] : []),
-				...(toolState.strike.visible ? ['strike'] : [])
-			].filter((tool) => tool),
-			...(toolState.list.visible ? [[{ list: 'ordered' }, { list: 'bullet' }]] : []),
-			[
-				...(toolState.blockquote.visible ? ['blockquote'] : []),
-				...(toolState.codeBlock.visible ? ['code-block'] : [])
-			].filter((tool) => tool),
-			[
-				...(toolState.color.visible ? [{ color: [] }] : []),
-				...(toolState.background.visible ? [{ background: [] }] : [])
-			].filter((tool) => Object.keys(tool).length),
-			...(toolState.script.visible ? [[{ script: 'sub' }, { script: 'super' }]] : []),
-			...(toolState.indent.visible ? [[{ indent: '-1' }, { indent: '+1' }]] : []),
-			...(toolState.direction.visible ? [[{ direction: 'rtl' }]] : []),
-			...(toolState.align.visible ? [[{ align: [] }]] : []),
-			[
-				...(toolState.link.visible ? ['link'] : []),
-				...(toolState.image.visible ? ['image'] : []),
-				...(toolState.video.visible ? ['video'] : [])
-			].filter((tool) => tool),
-			...(toolState.clean.visible ? [['clean']] : [])
-		].filter((group) => Array.isArray(group) && group.length > 0);
-	}
-
-	function toggleSettings() {
-		isSettingsModalOpen = !isSettingsModalOpen;
-		if (!isSettingsModalOpen) {
-			setTimeout(() => {
-				reinitializeQuill();
-			}, 0);
-		}
 	}
 </script>
 
@@ -389,12 +418,12 @@
 				<div class="close-button" onclick={toggleSettings} role="button" tabindex="0">×</div>
 			</div>
 			<div class="settings-body">
-				{#each Object.entries(toolState) as [, value]}
+				{#each Object.entries(toolState) as [key, value]}
 					<label class="setting-item">
 						<input
 							type="checkbox"
 							checked={value.visible}
-							onchange={() => (value.visible = !value.visible)}
+							onchange={() => toggleToolVisibility(key as ToolKey)}
 						/>
 						<span>{value.label}</span>
 					</label>
@@ -533,8 +562,8 @@
 	}
 
 	/*settings button */
-  .rich-text-editor :global(.ql-toolbar .ql-settings) {
-    border-left: 1px solid #ccc;
-    padding-left: 20px;
-  }
+	.rich-text-editor :global(.ql-toolbar .ql-settings) {
+		border-left: 1px solid #ccc;
+		padding-left: 20px;
+	}
 </style>
