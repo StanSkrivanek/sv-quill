@@ -1,14 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-
-	interface Props {
-		noteContent?: string;
-		title?: string;
-		placeholder?: string;
-		readonly?: boolean;
-		height?: string;
-		onChange?: (details: { title: string; html: string; text: string }) => void;
-	}
+import type {ToolConfigType, Props, ToolKey, ToolsState} from './types';
+import {ALLOWED_OPTIONS} from './config';
 
 	let {
 		noteContent = '',
@@ -31,37 +24,6 @@
 	let tools: any[] = [];
 
 	// ---------------------- QUILL Toolbar CONFIGURATION ----------------------
-
-	// toolbar tools types
-	interface ToolConfigType {
-		visible: boolean;
-		label: string;
-	}
-
-	type ToolKey =
-		| 'font'
-		| 'header'
-		| 'bold'
-		| 'italic'
-		| 'underline'
-		| 'strike'
-		| 'list'
-		| 'blockquote'
-		| 'codeBlock'
-		| 'color'
-		| 'background'
-		| 'script'
-		| 'indent'
-		| 'direction'
-		| 'align'
-		| 'link'
-		| 'image'
-		| 'video'
-		| 'clean';
-
-	type ToolsState = {
-		[K in ToolKey]: ToolConfigType;
-	};
 
 	// Create state for tools
 	const toolState = $state.raw<ToolsState>({
@@ -127,63 +89,8 @@
 		tools = toolbarTools();
 		$inspect('🚀 ~ TOOLS:', tools);
 	});
-	// $inspect('TOOLS', tools);
-	// const toolbarTools = $state([
-	// 	[{ font: [] }],
-	// 	[{ header: [1, 2, 3, 4, 5, 6, false] }],
-	// 	['bold', 'italic', 'underline', 'strike'],
-	// 	[{ list: 'ordered' }, { list: 'bullet' }],
-	// 	['blockquote', 'code-block'],
-	// 	[{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }],
-	// 	[{ color: [] }, { background: [] }],
-	// 	[{ script: 'sub' }, { script: 'super' }],
-	// 	[{ indent: '-1' }, { indent: '+1' }],
-	// 	[{ direction: 'rtl' }],
-	// 	[{ align: [] }],
-	// 	['link', 'image', 'video'],
-	// 	['clean']
-	// ]);
 
-	const allowedOptions = {
-		ALLOWED_TAGS: [
-			'p',
-			'br',
-			'strong',
-			'em',
-			'u',
-			's',
-			'h1',
-			'h2',
-			'h3',
-			'h4',
-			'h5',
-			'h6',
-			'ol',
-			'ul',
-			'li',
-			'blockquote',
-			'pre',
-			'code',
-			'a',
-			'img',
-			'video',
-			'span',
-			'sub',
-			'super',
-			'div'
-		],
-		ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'controls', 'width', 'height'],
-		ALLOWED_STYLES: [
-			'color',
-			'background-color',
-			'text-align',
-			'font-size',
-			'font-family',
-			'margin',
-			'margin-left',
-			'padding'
-		]
-	};
+
 	// ---------------------- IMAGE HANDLER ----------------------
 	async function convertToBase64(file: File): Promise<string> {
 		return new Promise((resolve, reject) => {
@@ -315,7 +222,7 @@
 			// Restore content after a brief delay to ensure proper initialization
 			setTimeout(() => {
 				if (currentContent && quill) {
-					quill.root.innerHTML = DOMPurify.sanitize(currentContent, allowedOptions);
+					quill.root.innerHTML = DOMPurify.sanitize(currentContent, ALLOWED_OPTIONS);
 				}
 			}, 0);
 
@@ -323,7 +230,7 @@
 
 			quill.on('text-change', () => {
 				const html = quill.root.innerHTML;
-				const cleanHtml = DOMPurify.sanitize(html, allowedOptions);
+				const cleanHtml = DOMPurify.sanitize(html, ALLOWED_OPTIONS);
 				const text = quill.getText();
 				onChange({ title, html: cleanHtml, text });
 			});
@@ -415,7 +322,7 @@
     // Reattach event handlers
     quill.on('text-change', () => {
       const dirtyHtml = quill.root.innerHTML;
-      const cleanHtml = DOMPurify.sanitize(dirtyHtml, allowedOptions);
+      const cleanHtml = DOMPurify.sanitize(dirtyHtml, ALLOWED_OPTIONS);
       const text = quill.getText();
       onChange({ title, html: cleanHtml, text });
     });

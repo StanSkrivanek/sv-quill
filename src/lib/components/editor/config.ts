@@ -1,4 +1,6 @@
 // config.ts
+import type { ToolConfigType } from './types';
+
 export const ALLOWED_OPTIONS = {
 	ALLOWED_TAGS: [
 		'p',
@@ -47,25 +49,25 @@ export const IMAGE_CONFIG = {
 };
 
 interface ToolsState {
-	font: { visible: boolean; label: string };
-	header: { visible: boolean; label: string };
-	bold: { visible: boolean; label: string };
-	italic: { visible: boolean; label: string };
-	underline: { visible: boolean; label: string };
-	strike: { visible: boolean; label: string };
-	list: { visible: boolean; label: string };
-	blockquote: { visible: boolean; label: string };
-	codeBlock: { visible: boolean; label: string };
-	color: { visible: boolean; label: string };
-	background: { visible: boolean; label: string };
-	script: { visible: boolean; label: string };
-	indent: { visible: boolean; label: string };
-	direction: { visible: boolean; label: string };
-	align: { visible: boolean; label: string };
-	link: { visible: boolean; label: string };
-	image: { visible: boolean; label: string };
-	video: { visible: boolean; label: string };
-	clean: { visible: boolean; label: string };
+	font: ToolConfigType;
+	header: ToolConfigType;
+	bold: ToolConfigType;
+	italic: ToolConfigType;
+	underline: ToolConfigType;
+	strike: ToolConfigType;
+	list: ToolConfigType;
+	blockquote: ToolConfigType;
+	codeBlock: ToolConfigType;
+	color: ToolConfigType;
+	background: ToolConfigType;
+	script: ToolConfigType;
+	indent: ToolConfigType;
+	direction: ToolConfigType;
+	align: ToolConfigType;
+	link: ToolConfigType;
+	image: ToolConfigType;
+	video: ToolConfigType;
+	clean: ToolConfigType;
 }
 
 export const INITIAL_TOOL_STATE: ToolsState = {

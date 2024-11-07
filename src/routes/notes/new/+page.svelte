@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+	import RichTextEditor from '$lib/components/editor/RichTextEditor.svelte';
 
 	let editorContent = $state({
 		title: '' as string,
