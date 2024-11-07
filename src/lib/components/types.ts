@@ -37,3 +37,4 @@ export type ToolKey =
 export type ToolsState = {
 	[K in ToolKey]: ToolConfigType;
 };
+
