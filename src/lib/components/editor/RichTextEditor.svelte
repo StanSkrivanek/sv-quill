@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { ALLOWED_OPTIONS } from './config';
+	import { ALLOWED_OPTIONS, INITIAL_TOOL_STATE } from './config';
 	import type { Props, ToolKey, ToolsState } from './types';
 
 	let {
@@ -27,31 +27,9 @@
 	let tools: any[] = [];
 	// ---------------------- QUILL Toolbar CONFIGURATION ----------------------
 
-	// Create state for tools
-	const defaultToolState = $state<ToolsState>({
-		font: { visible: true, label: 'Font' },
-		header: { visible: true, label: 'Headers' },
-		bold: { visible: true, label: 'Bold' },
-		italic: { visible: true, label: 'Italic' },
-		underline: { visible: true, label: 'Underline' },
-		strike: { visible: true, label: 'Strike' },
-		list: { visible: true, label: 'Lists' },
-		blockquote: { visible: true, label: 'Blockquote' },
-		codeBlock: { visible: true, label: 'Code Block' },
-		color: { visible: true, label: 'Text Color' },
-		background: { visible: true, label: 'Background Color' },
-		script: { visible: true, label: 'Subscript/Superscript' },
-		indent: { visible: true, label: 'Indentation' },
-		direction: { visible: true, label: 'Text Direction' },
-		align: { visible: true, label: 'Alignment' },
-		link: { visible: true, label: 'Link' },
-		image: { visible: true, label: 'Image' },
-		video: { visible: true, label: 'Video' },
-		clean: { visible: true, label: 'Clear Formatting' }
-	});
 	// Create derived state for tool settings
 	const toolState = $state<ToolsState>({
-		...defaultToolState,
+		...INITIAL_TOOL_STATE,
 		...storedToolState
 	});
 	// Create derived state for toolbar options
