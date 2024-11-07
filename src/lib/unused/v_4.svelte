@@ -1,3 +1,5 @@
+<!-- This version works but doesn't delete old toolbar -->
+
 <script lang="ts">
 	import { browser } from '$app/environment';
 
@@ -367,18 +369,12 @@
     const content = quill.getContents();
     const selection = quill.getSelection();
 
-    // Find and remove the old toolbar
-    const oldToolbar = document.querySelector('.ql-toolbar');
-    if (oldToolbar) {
-      oldToolbar.remove();
-    }
-
     // Remove old instance and clean up
     const oldContainer = quill.container;
     quill.off('text-change');
     oldContainer.innerHTML = '';
 
-    // Create new container structure
+    // Create container structure
     const toolbarContainer = document.createElement('div');
     toolbarContainer.id = 'toolbar-container';
     const editorContainer = document.createElement('div');
@@ -387,18 +383,14 @@
     oldContainer.appendChild(toolbarContainer);
     oldContainer.appendChild(editorContainer);
 
+    // Get current toolbar configuration
+    const currentTools = generateToolbarOptions();
+
     // Initialize new Quill instance with current tools
     quill = new Quill(editorContainer, {
       modules: {
         toolbar: {
-          container: [
-            [{ settings: 'Settings' }], // Settings button
-            ...(generateToolbarOptions())
-          ],
-          handlers: {
-            settings: toggleSettings,
-            image: imageHandler
-          }
+          container: currentTools
         }
       },
       theme: 'snow',
@@ -415,7 +407,7 @@
     // Reattach event handlers
     quill.on('text-change', () => {
       const dirtyHtml = quill.root.innerHTML;
-      const cleanHtml = DOMPurify.sanitize(dirtyHtml, allowedOptions);
+      const cleanHtml = DOMPurify.sanitize(dirtyHtml);
       const text = quill.getText();
       onChange({ title, html: cleanHtml, text });
     });
@@ -461,6 +453,7 @@
       }, 0);
     }
   }
+  
 </script>
 
 {#if browser}

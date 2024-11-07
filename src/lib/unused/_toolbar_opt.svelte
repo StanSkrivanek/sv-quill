@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 
@@ -7,7 +7,7 @@
 		visible: boolean;
 	}
 
-   // toolbar tools types
+	// toolbar tools types
 	interface ToolbarSettings {
 		font: ToolbarConfig;
 		header: ToolbarConfig;
@@ -55,7 +55,7 @@
 	let isEditorReady = false;
 	let isSettingsOpen = $state(false);
 
-   // Toolbar settings
+	// Toolbar settings
 	let tools: ToolbarSettings = $state({
 		font: { enabled: false, visible: false },
 		header: { enabled: true, visible: true },
@@ -375,7 +375,7 @@
 							<div class="setting-item">
 								<span class="setting-label">{option}</span>
 								<div class="setting-controls">
-									<!-- <label class="toggle-label">
+								 <label class="toggle-label">
 										<input
 											type="checkbox"
 											checked={config.visible}
@@ -383,7 +383,7 @@
 												updateToolbarOption(option as keyof ToolbarSettings, 'visible')}
 										/>
 										<span class="toggle-text">Visible</span>
-									</label> -->
+									</label> --
 									<label class="toggle-label">
 										<input
 											type="checkbox"
@@ -701,4 +701,4 @@
 	.rich-text-editor input[type='text']::placeholder {
 		color: #9ca3af;
 	}
-</style>
+</style> -->
