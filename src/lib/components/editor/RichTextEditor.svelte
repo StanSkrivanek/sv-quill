@@ -91,82 +91,6 @@
 		$inspect('🚀 ~ TOOLS:', tools);
 	});
 
-	// ---------------------- IMAGE HANDLER ----------------------
-	async function convertToBase64(file: File): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			reader.readAsDataURL(file);
-			reader.onload = () => resolve(reader.result as string);
-			reader.onerror = (error) => reject(error);
-		});
-	}
-
-	const imageHandler = () => {
-		const input = document.createElement('input');
-		input.setAttribute('type', 'file');
-		input.setAttribute('accept', 'image/*');
-		input.click();
-
-		input.onchange = async () => {
-			const file = input.files?.[0];
-			if (file) {
-				try {
-					const maxSizeKB = 200;
-					if (file.size > maxSizeKB * 1024) {
-						showPopup(`Image size should not exceed ${maxSizeKB}KB`);
-						return;
-					}
-
-					const maxWidth = 1280;
-					const maxHeight = 960;
-					const image = new Image();
-					image.src = URL.createObjectURL(file);
-					image.onload = () => {
-						if (image.width > maxWidth || image.height > maxHeight) {
-							showPopup(`Image dimensions should not exceed ${maxWidth}x${maxHeight}px`);
-							return;
-						}
-						convertAndInsertImage(file);
-					};
-				} catch (error) {
-					console.error('Error uploading image:', error);
-				}
-			}
-		};
-	};
-
-	async function convertAndInsertImage(file: File) {
-		const imageUrl = await convertToBase64(file);
-		const range = quill.getSelection();
-		quill.insertEmbed(range.index, 'image', imageUrl);
-	}
-
-	function showPopup(message: string) {
-		const popup = document.createElement('div');
-		popup.className =
-			'popup fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50';
-
-		const popupContent = document.createElement('div');
-		popupContent.className = 'bg-white p-6 rounded-lg shadow-lg text-center';
-
-		const messageText = document.createElement('p');
-		messageText.innerText = message;
-
-		const closeButton = document.createElement('button');
-		closeButton.className = 'mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-00';
-		closeButton.innerText = 'Close';
-		closeButton.onclick = () => popup.remove();
-
-		popupContent.appendChild(messageText);
-		popupContent.appendChild(closeButton);
-		popup.appendChild(popupContent);
-		document.body.appendChild(popup);
-
-		setTimeout(() => {
-			popup.remove();
-		}, 6000);
-	}
-
 	// Add function to handle Quill initialization
 	async function initializeQuill() {
 		try {
@@ -356,6 +280,82 @@
 			}, 0);
 		}
 	}
+
+	// ---------------------- IMAGE HANDLER ----------------------
+	async function convertToBase64(file: File): Promise<string> {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.readAsDataURL(file);
+			reader.onload = () => resolve(reader.result as string);
+			reader.onerror = (error) => reject(error);
+		});
+	}
+
+	const imageHandler = () => {
+		const input = document.createElement('input');
+		input.setAttribute('type', 'file');
+		input.setAttribute('accept', 'image/*');
+		input.click();
+
+		input.onchange = async () => {
+			const file = input.files?.[0];
+			if (file) {
+				try {
+					const maxSizeKB = 200;
+					if (file.size > maxSizeKB * 1024) {
+						showPopup(`Image size should not exceed ${maxSizeKB}KB`);
+						return;
+					}
+
+					const maxWidth = 1280;
+					const maxHeight = 960;
+					const image = new Image();
+					image.src = URL.createObjectURL(file);
+					image.onload = () => {
+						if (image.width > maxWidth || image.height > maxHeight) {
+							showPopup(`Image dimensions should not exceed ${maxWidth}x${maxHeight}px`);
+							return;
+						}
+						convertAndInsertImage(file);
+					};
+				} catch (error) {
+					console.error('Error uploading image:', error);
+				}
+			}
+		};
+	};
+
+	async function convertAndInsertImage(file: File) {
+		const imageUrl = await convertToBase64(file);
+		const range = quill.getSelection();
+		quill.insertEmbed(range.index, 'image', imageUrl);
+	}
+
+	function showPopup(message: string) {
+		const popup = document.createElement('div');
+		popup.className =
+			'popup fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50';
+
+		const popupContent = document.createElement('div');
+		popupContent.className = 'bg-white p-6 rounded-lg shadow-lg text-center';
+
+		const messageText = document.createElement('p');
+		messageText.innerText = message;
+
+		const closeButton = document.createElement('button');
+		closeButton.className = 'mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-00';
+		closeButton.innerText = 'Close';
+		closeButton.onclick = () => popup.remove();
+
+		popupContent.appendChild(messageText);
+		popupContent.appendChild(closeButton);
+		popup.appendChild(popupContent);
+		document.body.appendChild(popup);
+
+		setTimeout(() => {
+			popup.remove();
+		}, 6000);
+	}
 </script>
 
 {#if browser}
@@ -532,8 +532,8 @@
 	}
 
 	/*settings button */
-  .rich-text-editor :global(.ql-toolbar .ql-settings) {
-    border-left: 1px solid #ccc;
-    padding-left: 20px;
-  }
+	.rich-text-editor :global(.ql-toolbar .ql-settings) {
+		border-left: 1px solid #ccc;
+		padding-left: 20px;
+	}
 </style>
