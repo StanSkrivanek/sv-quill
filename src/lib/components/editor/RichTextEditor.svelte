@@ -26,7 +26,7 @@
 	// ---------------------- QUILL Toolbar CONFIGURATION ----------------------
 
 	// Create state for tools
-	const toolState = $state.raw<ToolsState>({
+	const toolState = $state<ToolsState>({
 		font: { visible: true, label: 'Font' },
 		header: { visible: true, label: 'Headers' },
 		bold: { visible: true, label: 'Bold' },
@@ -47,12 +47,11 @@
 		video: { visible: true, label: 'Video' },
 		clean: { visible: true, label: 'Clear Formatting' }
 	});
-	$inspect('🚀 ~ toolState:', toolState);
+	// $inspect('🚀 ~ toolState:', toolState);
 
 	// Create derived state for toolbar options
 	const toolbarTools = $derived(() => {
-		return [
-			[{ settings: 'Settings' }], // Add settings button
+		const tools = [
 			[{ font: toolState.font.visible ? [] : false }],
 			[{ header: toolState.header.visible ? [1, 2, 3, 4, 5, 6, false] : [] }],
 			[
@@ -81,6 +80,8 @@
 			],
 			...(toolState.clean.visible ? [['clean']] : [])
 		].filter((group) => group.length > 0);
+
+		return [...tools, [{ settings: 'Settings' }]];
 	});
 
 	// Update tools when toolState changes
@@ -288,7 +289,7 @@
 		quill = new Quill(editorElement, {
 			modules: {
 				toolbar: {
-					container: [[{ settings: 'Settings' }], ...generateToolbarOptions()],
+					container: [...generateToolbarOptions(), [{ settings: 'Settings' }]],
 					handlers: {
 						settings: toggleSettings,
 						image: imageHandler
@@ -309,7 +310,7 @@
 		// Reattach event handlers
 		quill.on('text-change', () => {
 			const dirtyHtml = quill.root.innerHTML;
-			const cleanHtml = DOMPurify.sanitize(dirtyHtml, allowedOptions);
+			const cleanHtml = DOMPurify.sanitize(dirtyHtml, ALLOWED_OPTIONS);
 			const text = quill.getText();
 			onChange({ title, html: cleanHtml, text });
 		});
@@ -512,4 +513,27 @@
 		background-position: center;
 		background-repeat: no-repeat;
 	}
+	.rich-text-editor :global(.ql-toolbar) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.rich-text-editor :global(.ql-toolbar .ql-formats) {
+		display: flex;
+		align-items: center;
+	}
+	.rich-text-editor :global(.ql-toolbar .ql-formats:nth-last-child(2)) {
+		flex: 1;
+	}
+	.rich-text-editor :global(.ql-toolbar .ql-formats:nth-last-child(1)) {
+		margin: 0;
+	}
+
+	/*settings button */
+  .rich-text-editor :global(.ql-toolbar .ql-settings) {
+    border-left: 1px solid #ccc;
+    padding-left: 20px;
+  }
 </style>

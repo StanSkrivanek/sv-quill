@@ -68,6 +68,7 @@ interface ToolsState {
 	image: ToolConfigType;
 	video: ToolConfigType;
 	clean: ToolConfigType;
+	// settings: ToolConfigType;
 }
 
 export const INITIAL_TOOL_STATE: ToolsState = {
@@ -89,5 +90,6 @@ export const INITIAL_TOOL_STATE: ToolsState = {
 	link: { visible: true, label: 'Link' },
 	image: { visible: true, label: 'Image' },
 	video: { visible: true, label: 'Video' },
-	clean: { visible: true, label: 'Clear Formatting' }
+	clean: { visible: true, label: 'Clear Formatting' },
+	// settings: { visible: true, label: 'Settings' }
 };
