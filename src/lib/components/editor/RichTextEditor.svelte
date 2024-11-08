@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { ALLOWED_OPTIONS, INITIAL_TOOL_STATE } from './config';
+	import { onMount, tick } from 'svelte';
+	import { ALLOWED_OPTIONS, INITIAL_TOOL_STATE, IMAGE_CONSTRAINTS } from './config';
 	import type { Props, ToolKey, ToolsState } from './types';
 
 	let {
@@ -19,10 +20,11 @@
 	let isEditorReady = false;
 	let isSettingsModalOpen = $state(false);
 	let mounted = $state(false);
+	let isDialogOpen = $state(false);
+	let popupMessage = '';
 	// Storage utilities
 	const STORAGE_KEY = 'quill-toolbar-settings';
 	const storedToolState = loadToolbarSettings();
-	// $inspect('🚀 ~ isSettingsModalOpen:', isSettingsModalOpen);
 
 	let tools: any[] = [];
 	// ---------------------- QUILL Toolbar CONFIGURATION ----------------------
@@ -31,40 +33,6 @@
 	const toolState = $state<ToolsState>({
 		...INITIAL_TOOL_STATE,
 		...storedToolState
-	});
-	// Create derived state for toolbar options
-	const toolbarTools = $derived(() => {
-		const tools = [
-			[{ font: toolState.font.visible ? [] : false }],
-			[{ header: toolState.header.visible ? [1, 2, 3, 4, 5, 6, false] : [] }],
-			[
-				...(toolState.bold.visible ? ['bold'] : []),
-				...(toolState.italic.visible ? ['italic'] : []),
-				...(toolState.underline.visible ? ['underline'] : []),
-				...(toolState.strike.visible ? ['strike'] : [])
-			],
-			[...(toolState.list.visible ? [{ list: 'ordered' }, { list: 'bullet' }] : [])],
-			[
-				...(toolState.blockquote.visible ? ['blockquote'] : []),
-				...(toolState.codeBlock.visible ? ['code-block'] : [])
-			],
-			[
-				...(toolState.color.visible ? [{ color: [] }] : []),
-				...(toolState.background.visible ? [{ background: [] }] : [])
-			],
-			...(toolState.script.visible ? [[{ script: 'sub' }, { script: 'super' }]] : []),
-			...(toolState.indent.visible ? [[{ indent: '-1' }, { indent: '+1' }]] : []),
-			...(toolState.direction.visible ? [[{ direction: 'rtl' }]] : []),
-			...(toolState.align.visible ? [[{ align: [] }]] : []),
-			[
-				...(toolState.link.visible ? ['link'] : []),
-				...(toolState.image.visible ? ['image'] : []),
-				...(toolState.video.visible ? ['video'] : [])
-			],
-			...(toolState.clean.visible ? [['clean']] : [])
-		].filter((group) => group.length > 0);
-
-		return [...tools, [{ settings: 'Settings' }]];
 	});
 
 	// Function to toggle tool visibility
@@ -76,7 +44,7 @@
 
 	// Update tools when toolState changes
 	$effect(() => {
-		tools = toolbarTools();
+		tools = generateToolbarOptions();
 		$inspect('🚀 ~ TOOLS:', tools);
 	});
 
@@ -162,11 +130,10 @@
 			});
 
 			// Restore content after a brief delay to ensure proper initialization
-			setTimeout(() => {
-				if (currentContent && quill) {
-					quill.root.innerHTML = DOMPurify.sanitize(currentContent, ALLOWED_OPTIONS);
-				}
-			}, 0);
+			await tick();
+			if (currentContent && quill) {
+				quill.root.innerHTML = DOMPurify.sanitize(currentContent, ALLOWED_OPTIONS);
+			}
 
 			isEditorReady = true;
 
@@ -220,7 +187,7 @@
 		});
 	}
 	// Initialize Quill on mount
-	$effect(() => {
+	onMount(() => {
 		if (!browser) return;
 
 		mounted = true;
@@ -279,16 +246,83 @@
 	}
 
 	//  Run reinitializeQuill() on dialog Close
-	function toggleSettings() {
+	async function toggleSettings() {
 		isSettingsModalOpen = !isSettingsModalOpen;
 		if (!isSettingsModalOpen) {
-			setTimeout(() => {
-				reinitializeQuill();
-			}, 0);
+			await tick();
+			reinitializeQuill();
 		}
 	}
 
 	// ---------------------- IMAGE HANDLER ----------------------
+
+	const imageHandler = async () => {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.accept = 'image/*';
+
+		try {
+			let isLoading = true;
+
+			input.onchange = async () => {
+				const file = input.files?.[0];
+				if (!file) return;
+
+				// Validate file type
+				if (!IMAGE_CONSTRAINTS.allowedTypes.includes(file.type)) {
+					showError('Please upload a valid image file (JPEG, PNG, or GIF)');
+					return;
+				}
+
+				// Validate file size
+				if (file.size > IMAGE_CONSTRAINTS.maxSizeKB * 1024) {
+					showError(`Image size should not exceed ${IMAGE_CONSTRAINTS.maxSizeKB}KB`);
+					return;
+				}
+
+				const objectUrl = URL.createObjectURL(file);
+				const image = new Image();
+
+				try {
+					await new Promise((resolve, reject) => {
+						image.onload = resolve;
+						image.onerror = reject;
+						image.src = objectUrl;
+					});
+
+					// Validate dimensions
+					if (
+						image.width > IMAGE_CONSTRAINTS.maxWidth ||
+						image.height > IMAGE_CONSTRAINTS.maxHeight
+					) {
+						showError(
+							`Image dimensions should not exceed ${IMAGE_CONSTRAINTS.maxWidth}x${IMAGE_CONSTRAINTS.maxHeight}px`
+						);
+						return;
+					}
+
+					await convertAndInsertImage(file);
+				} catch (error) {
+					showError('Failed to process image');
+					console.error('Image processing error:', error);
+				} finally {
+					URL.revokeObjectURL(objectUrl);
+					isLoading = false;
+				}
+			};
+
+			input.click();
+		} catch (error) {
+			showError('Failed to handle image upload');
+			console.error('Image handler error:', error);
+		}
+	};
+
+	const showError = (message: string) => {
+		isDialogOpen = true;
+		popupMessage = message;
+	};
+
 	async function convertToBase64(file: File): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const reader = new FileReader();
@@ -298,40 +332,6 @@
 		});
 	}
 
-	const imageHandler = () => {
-		const input = document.createElement('input');
-		input.setAttribute('type', 'file');
-		input.setAttribute('accept', 'image/*');
-		input.click();
-
-		input.onchange = async () => {
-			const file = input.files?.[0];
-			if (file) {
-				try {
-					const maxSizeKB = 200;
-					if (file.size > maxSizeKB * 1024) {
-						showPopup(`Image size should not exceed ${maxSizeKB}KB`);
-						return;
-					}
-
-					const maxWidth = 1280;
-					const maxHeight = 960;
-					const image = new Image();
-					image.src = URL.createObjectURL(file);
-					image.onload = () => {
-						if (image.width > maxWidth || image.height > maxHeight) {
-							showPopup(`Image dimensions should not exceed ${maxWidth}x${maxHeight}px`);
-							return;
-						}
-						convertAndInsertImage(file);
-					};
-				} catch (error) {
-					console.error('Error uploading image:', error);
-				}
-			}
-		};
-	};
-
 	async function convertAndInsertImage(file: File) {
 		const imageUrl = await convertToBase64(file);
 		const range = quill.getSelection();
@@ -339,31 +339,6 @@
 	}
 
 	// ---------------------- POPUP HANDLER ----------------------
-	function showPopup(message: string) {
-		const popup = document.createElement('div');
-		popup.className =
-			'popup fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50';
-
-		const popupContent = document.createElement('div');
-		popupContent.className = 'bg-white p-6 rounded-lg shadow-lg text-center';
-
-		const messageText = document.createElement('p');
-		messageText.innerText = message;
-
-		const closeButton = document.createElement('button');
-		closeButton.className = 'mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-00';
-		closeButton.innerText = 'Close';
-		closeButton.onclick = () => popup.remove();
-
-		popupContent.appendChild(messageText);
-		popupContent.appendChild(closeButton);
-		popup.appendChild(popupContent);
-		document.body.appendChild(popup);
-
-		setTimeout(() => {
-			popup.remove();
-		}, 6000);
-	}
 </script>
 
 {#if browser}
@@ -375,6 +350,18 @@
 			oninput={() => onChange({ title, html: quill.root.innerHTML, text: quill.getText() })}
 		/>
 		<div bind:this={editorElement}></div>
+		<!-- showPopup -->
+		{#if isDialogOpen}
+			<div class="popup fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+				<div class="popup-content rounded-lg bg-white p-6 text-center shadow-lg">
+					<p class="mb-4">{popupMessage}</p>
+					<button
+						class=" rounded bg-blue-500 px-4 py-2 text-white"
+						onclick={() => (isDialogOpen = false)}>Close</button
+					>
+				</div>
+			</div>
+		{/if}
 	</div>
 {/if}
 
