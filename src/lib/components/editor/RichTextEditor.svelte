@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount, tick } from 'svelte';
-	import { ALLOWED_OPTIONS, INITIAL_TOOL_STATE, IMAGE_CONSTRAINTS } from './config';
+	import { ALLOWED_OPTIONS, IMAGE_CONSTRAINTS, INITIAL_TOOL_STATE } from './config';
 	import type { Props, ToolKey, ToolsState } from './types';
 
 	let {
@@ -21,12 +21,14 @@
 	let isSettingsModalOpen = $state(false);
 	let mounted = $state(false);
 	let isDialogOpen = $state(false);
-	let popupMessage = '';
+	let popupMessage = $state('');
 	// Storage utilities
 	const STORAGE_KEY = 'quill-toolbar-settings';
 	const storedToolState = loadToolbarSettings();
 
 	let tools: any[] = [];
+
+
 	// ---------------------- QUILL Toolbar CONFIGURATION ----------------------
 
 	// Create derived state for tool settings
@@ -45,7 +47,7 @@
 	// Update tools when toolState changes
 	$effect(() => {
 		tools = generateToolbarOptions();
-		$inspect('🚀 ~ TOOLS:', tools);
+		// $inspect('🚀 ~ TOOLS:', tools);
 	});
 
 	// ---------------------- LOCAL STORE FOR TOOLBAR SETTING STATE ----------------------

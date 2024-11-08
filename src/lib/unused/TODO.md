@@ -12,6 +12,6 @@
 
 - ~~Instead of a setTimeout(..., 0) maybe you can use **tick** to delay the action just after the DOM update (if it's what you need)~~
 
-- for the showPopup function, instead of creating the DOM on the fly with the DOM API, I personally prefer to have the HTML wrapped inside a {#if} block and manage the display of the dialog with a variable (it also offers the ability to use transition: to show/hide the modal)
+- ~~for the showPopup function, instead of creating the DOM on the fly with the DOM API, I personally prefer to have the HTML wrapped inside a {#if} block and manage the display of the dialog with a variable (it also offers the ability to use transition: to show/hide the modal)~~
 
 - Maybe the setup of the Quill could be done with an action instead of playing with the innerHTML DOM API 🤔
